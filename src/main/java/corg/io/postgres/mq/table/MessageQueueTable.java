@@ -3,13 +3,11 @@ package corg.io.postgres.mq.table;
 import corg.io.postgres.mq.model.config.DbConfig;
 import corg.io.postgres.mq.model.config.MessageQueueConfig;
 import corg.io.postgres.mq.model.message.Message;
+import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -53,6 +51,10 @@ public class MessageQueueTable {
                 statement.addBatch();
             }
             statement.executeBatch();
+        }
+        catch(SQLException e) {
+            logger.debug("Exception occurred while enqueuing", e);
+            throw e.getNextException(); // Root exception serves as a wrapper
         }
     }
 

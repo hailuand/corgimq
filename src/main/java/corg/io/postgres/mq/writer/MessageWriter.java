@@ -16,20 +16,20 @@ public class MessageWriter {
 
     private final MessageQueueTable messageQueueTable;
 
-    public static MessageWriter of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+    public static MessageWriter of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) throws SQLException {
         return new MessageWriter(dbConfig, messageQueueConfig);
     }
 
-    private MessageWriter(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+    private MessageWriter(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) throws SQLException {
         this.messageQueueTable = MessageQueueTable.of(dbConfig, messageQueueConfig);
-        try {
-            this.messageQueueTable.initSources();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        this.messageQueueTable.initSources();
     }
 
     public void write(List<Message> messages, Connection conn) throws SQLException {
+        if(messages.isEmpty()) {
+            logger.warn("No messages provided");
+            return;
+        }
         logger.debug("Writing {} messages", messages.size());
         this.messageQueueTable.enqueue(messages, conn);
     }
