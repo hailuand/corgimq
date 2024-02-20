@@ -1,4 +1,4 @@
-package corg.io.postgres.mq.producer;
+package corg.io.postgres.mq.writer;
 
 import corg.io.postgres.mq.model.config.DbConfig;
 import corg.io.postgres.mq.model.config.MessageQueueConfig;
@@ -16,8 +16,17 @@ public class MessageWriter {
 
     private final MessageQueueTable messageQueueTable;
 
+    public static MessageWriter of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+        return new MessageWriter(dbConfig, messageQueueConfig);
+    }
+
     private MessageWriter(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         this.messageQueueTable = MessageQueueTable.of(dbConfig, messageQueueConfig);
+        try {
+            this.messageQueueTable.initSources();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void write(List<Message> messages, Connection conn) throws SQLException {

@@ -1,4 +1,4 @@
-package corg.io.postgres.mq.consumer;
+package corg.io.postgres.mq.handler;
 
 import corg.io.postgres.mq.model.config.DbConfig;
 import corg.io.postgres.mq.model.config.MessageHandlerConfig;

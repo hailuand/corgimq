@@ -1,14 +1,13 @@
-package corg.io.postgres.mq.table.datasource;
+package corg.io.postgres.mq.writer.datasource;
 
 import corg.io.postgres.mq.RelationalTestUtil;
-import corg.io.postgres.mq.table.MessageQueueTableTestHarness;
+import corg.io.postgres.mq.writer.MessageWriterTest;
 import org.junit.jupiter.api.AfterEach;
 
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class H2MessageQueueTableTest extends MessageQueueTableTestHarness {
-
+public class H2MessageWriterTest extends MessageWriterTest {
     @Override
     protected Properties getProps() {
         return RelationalTestUtil.h2Props();

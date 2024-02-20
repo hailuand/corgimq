@@ -16,7 +16,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 public abstract class AbstractMessageQueueTableTest {
-    private static final String QUEUE_NAME = "corgi";
+    protected static final String QUEUE_NAME = "corgi";
     private static final Faker faker = new Faker();
 
     protected abstract Properties getProps();
@@ -25,12 +25,11 @@ public abstract class AbstractMessageQueueTableTest {
     protected MessageQueueTable messageQueue;
 
     @BeforeEach
-    public void testSetup() throws SQLException {
+    public void testSetup() {
         var props = getProps();
         var dbConfig = DbConfig.of(getJdbcUrl(), props);
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         messageQueue = MessageQueueTable.of(dbConfig, mqConfig);
-        messageQueue.initSources();
     }
 
     protected Connection getConnection() throws SQLException {
