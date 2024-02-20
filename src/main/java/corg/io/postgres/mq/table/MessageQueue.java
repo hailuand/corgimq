@@ -18,17 +18,17 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class MessageQueueTable {
-    private static final Logger logger = LoggerFactory.getLogger(MessageQueueTable.class);
+public class MessageQueue {
+    private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
 
     private final MessageQueueConfig messageQueueConfig;
     private final HikariDataSource hikariDataSource;
 
-    public static MessageQueueTable of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
-        return new MessageQueueTable(dbConfig, messageQueueConfig);
+    public static MessageQueue of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+        return new MessageQueue(dbConfig, messageQueueConfig);
     }
 
-    private MessageQueueTable(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+    private MessageQueue(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         Objects.requireNonNull(dbConfig);
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
         HikariConfig hikariConfig = new HikariConfig();

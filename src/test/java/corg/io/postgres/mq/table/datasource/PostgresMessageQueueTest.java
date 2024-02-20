@@ -1,7 +1,7 @@
 package corg.io.postgres.mq.table.datasource;
 
 import corg.io.postgres.mq.RelationalTestUtil;
-import corg.io.postgres.mq.table.MessageQueueTableTestHarness;
+import corg.io.postgres.mq.table.MessageQueueTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,7 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.sql.SQLException;
 
 @Testcontainers(disabledWithoutDocker = true)
-public class PostgresMessageQueueTableTest extends MessageQueueTableTestHarness {
+public class PostgresMessageQueueTest extends MessageQueueTest {
     private static JdbcDatabaseContainer<?> postgres;
 
     @BeforeAll

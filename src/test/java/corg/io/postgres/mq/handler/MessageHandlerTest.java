@@ -1,6 +1,6 @@
 package corg.io.postgres.mq.handler;
 
-import corg.io.postgres.mq.AbstractMessageQueueTableTest;
+import corg.io.postgres.mq.AbstractMessageQueueTest;
 import corg.io.postgres.mq.model.config.DbConfig;
 import corg.io.postgres.mq.model.config.MessageHandlerConfig;
 import corg.io.postgres.mq.model.config.MessageQueueConfig;
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public abstract class MessageHandlerTest extends AbstractMessageQueueTableTest {
+public abstract class MessageHandlerTest extends AbstractMessageQueueTest {
     protected MessageHandler messageHandler;
 
     @BeforeEach

@@ -1,12 +1,12 @@
-package corg.io.postgres.mq.writer.datasource;
+package corg.io.postgres.mq.table.datasource;
 
 import corg.io.postgres.mq.RelationalTestUtil;
-import corg.io.postgres.mq.writer.MessageWriterTest;
+import corg.io.postgres.mq.table.MessageQueueTest;
 import org.junit.jupiter.api.AfterEach;
 
 import java.sql.SQLException;
 
-public class H2MessageWriterTest extends MessageWriterTest {
+public class H2MessageQueueTest extends MessageQueueTest {
     @Override
     protected String getUserName() {
         return RelationalTestUtil.h2UserName();
@@ -16,6 +16,7 @@ public class H2MessageWriterTest extends MessageWriterTest {
     protected String getPassword() {
         return RelationalTestUtil.getH2Password();
     }
+
 
     @Override
     protected String getJdbcUrl() {
