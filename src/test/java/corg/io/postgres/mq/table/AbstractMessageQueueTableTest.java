@@ -4,10 +4,10 @@ import corg.io.postgres.mq.model.config.DbConfig;
 import corg.io.postgres.mq.model.config.MessageQueueConfig;
 import corg.io.postgres.mq.model.message.Message;
 import net.datafaker.Faker;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
@@ -19,33 +19,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("SqlSourceToSinkFlow")
-public class MessageQueueTableTest {
-    static final String QUEUE_NAME = "corgi";
-    static final String TEST_DATABASE = "TEST_DB";
-    static final String H2_JDBC_URL = "jdbc:h2:mem:" + TEST_DATABASE +
-            ";DATABASE_TO_UPPER=false;mode=mysql;LOCK_TIMEOUT=10000;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
-    static final String H2_USER_NAME = "sa";
-    static final String H2_PASSWORD = "";
-    static final Faker faker = new Faker();
+public abstract class AbstractMessageQueueTableTest {
+    private static final String QUEUE_NAME = "corgi";
+    private static final Faker faker = new Faker();
+
+    protected abstract Properties getProps();
+    protected abstract String getJdbcUrl();
+
+    protected Connection getConnection() throws SQLException {
+        return underTest.getConnection();
+    }
 
     MessageQueueTable underTest;
-
     @BeforeEach
     public void testSetup() throws SQLException {
-        var props = new Properties();
-        props.setProperty("user", H2_USER_NAME);
-        props.setProperty("password", H2_PASSWORD);
-        var dbConfig = DbConfig.of(H2_JDBC_URL, props);
+        var props = getProps();
+        var dbConfig = DbConfig.of(getJdbcUrl(), props);
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         underTest = MessageQueueTable.of(dbConfig, mqConfig);
         underTest.initSources();
-    }
-
-    @AfterEach
-    public void testTearDown() throws SQLException {
-        try(var conn = underTest.getConnection(); var st = conn.createStatement()) {
-            st.execute("DROP ALL OBJECTS");
-        }
     }
 
     @Test
