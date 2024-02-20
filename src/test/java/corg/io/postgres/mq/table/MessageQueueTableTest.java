@@ -62,7 +62,7 @@ public class MessageQueueTableTest {
             assertRowCount(messages.size());
             var pending = underTest.getPendingMessages(10, conn);
             assertEquals(messages, pending);
-        };
+        }
     }
 
     @Test

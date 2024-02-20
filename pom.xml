@@ -30,6 +30,10 @@
         <h2.version>2.2.224</h2.version>
         <!-- datafaker -->
         <datafaker.version>2.1.0</datafaker.version>
+        <!-- jacoco -->
+        <jacoco.version>0.8.11</jacoco.version>
+        <!-- maven surefire -->
+        <maven.surefire.version>3.2.5</maven.surefire.version>
     </properties>
 
     <dependencies>
@@ -102,5 +106,42 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>corg/io/postgres/mq/model/*</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.apache.maven.plugins</groupId>-->
+<!--                <artifactId>maven-surefire-plugin</artifactId>-->
+<!--                <version>${maven.surefire.version}</version>-->
+<!--                <configuration>-->
+<!--                    <argLine>@{argLine}</argLine>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+        </plugins>
+    </build>
 
 </project>
