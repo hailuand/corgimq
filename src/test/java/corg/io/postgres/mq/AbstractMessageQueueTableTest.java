@@ -12,22 +12,20 @@ import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.UUID;
 
 public abstract class AbstractMessageQueueTableTest {
     protected static final String QUEUE_NAME = "corgi";
     private static final Faker faker = new Faker();
-
-    protected abstract Properties getProps();
+    protected abstract String getUserName();
+    protected abstract String getPassword();
     protected abstract String getJdbcUrl();
 
     protected MessageQueueTable messageQueue;
 
     @BeforeEach
     public void testSetup() {
-        var props = getProps();
-        var dbConfig = DbConfig.of(getJdbcUrl(), props);
+        var dbConfig = DbConfig.of(getJdbcUrl(), getUserName(), getPassword());
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         messageQueue = MessageQueueTable.of(dbConfig, mqConfig);
     }

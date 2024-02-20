@@ -17,8 +17,7 @@ public abstract class MessageWriterTest extends AbstractMessageQueueTableTest {
 
     @BeforeEach
     public void setupMessageWriterTest() throws SQLException {
-        var props = getProps();
-        var dbConfig = DbConfig.of(getJdbcUrl(), props);
+        var dbConfig = DbConfig.of(getJdbcUrl(), getUserName(), getPassword());
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageWriter = MessageWriter.of(dbConfig, mqConfig);
     }

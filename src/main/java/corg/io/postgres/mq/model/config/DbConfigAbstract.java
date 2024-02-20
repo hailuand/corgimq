@@ -2,8 +2,6 @@ package corg.io.postgres.mq.model.config;
 
 import org.immutables.value.Value;
 
-import java.util.Properties;
-
 @Value.Immutable
 @Value.Style(
         typeAbstract = "*Abstract",
@@ -15,7 +13,12 @@ import java.util.Properties;
 public interface DbConfigAbstract {
     @Value.Parameter
     String jdbcUrl();
+
     @Value.Parameter
     @Value.Redacted
-    Properties props();
+    String username();
+
+    @Value.Parameter
+    @Value.Redacted
+    String password();
 }

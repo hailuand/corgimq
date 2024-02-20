@@ -9,7 +9,6 @@ import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.SQLException;
-import java.util.Properties;
 
 @Testcontainers(disabledWithoutDocker = true)
 public class PostgresMessageWriterTest extends MessageWriterTest {
@@ -22,8 +21,13 @@ public class PostgresMessageWriterTest extends MessageWriterTest {
     }
 
     @Override
-    protected Properties getProps() {
-        return RelationalTestUtil.jdbcContainerProps(postgres);
+    protected String getUserName() {
+        return RelationalTestUtil.postgresUserName(postgres);
+    }
+
+    @Override
+    protected String getPassword() {
+        return RelationalTestUtil.postgresPassword(postgres);
     }
 
     @Override

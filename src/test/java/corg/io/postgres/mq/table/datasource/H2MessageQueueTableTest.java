@@ -5,14 +5,18 @@ import corg.io.postgres.mq.table.MessageQueueTableTestHarness;
 import org.junit.jupiter.api.AfterEach;
 
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class H2MessageQueueTableTest extends MessageQueueTableTestHarness {
+    @Override
+    protected String getUserName() {
+        return RelationalTestUtil.h2UserName();
+    }
 
     @Override
-    protected Properties getProps() {
-        return RelationalTestUtil.h2Props();
+    protected String getPassword() {
+        return RelationalTestUtil.getH2Password();
     }
+
 
     @Override
     protected String getJdbcUrl() {

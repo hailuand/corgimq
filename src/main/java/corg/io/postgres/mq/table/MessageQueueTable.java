@@ -1,5 +1,7 @@
 package corg.io.postgres.mq.table;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import corg.io.postgres.mq.model.config.DbConfig;
 import corg.io.postgres.mq.model.config.MessageQueueConfig;
 import corg.io.postgres.mq.model.message.Message;
@@ -7,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Clock;
@@ -20,16 +21,21 @@ import java.util.Optional;
 public class MessageQueueTable {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueueTable.class);
 
-    private final DbConfig dbConfig;
     private final MessageQueueConfig messageQueueConfig;
+    private final HikariDataSource hikariDataSource;
 
     public static MessageQueueTable of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         return new MessageQueueTable(dbConfig, messageQueueConfig);
     }
 
     private MessageQueueTable(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
-        this.dbConfig = Objects.requireNonNull(dbConfig);
+        Objects.requireNonNull(dbConfig);
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(dbConfig.jdbcUrl());
+        hikariConfig.setUsername(dbConfig.username());
+        hikariConfig.setPassword(dbConfig.password());
+        this.hikariDataSource = new HikariDataSource(hikariConfig);
     }
 
     public void initSources() throws SQLException {
@@ -105,7 +111,7 @@ public class MessageQueueTable {
     }
 
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(this.dbConfig.jdbcUrl(), this.dbConfig.props());
+        return this.hikariDataSource.getConnection();
     }
 
     public String tableSchemaName() {

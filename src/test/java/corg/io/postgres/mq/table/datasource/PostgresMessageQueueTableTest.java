@@ -22,8 +22,13 @@ public class PostgresMessageQueueTableTest extends MessageQueueTableTestHarness 
     }
 
     @Override
-    protected Properties getProps() {
-        return RelationalTestUtil.jdbcContainerProps(postgres);
+    protected String getUserName() {
+        return RelationalTestUtil.postgresUserName(postgres);
+    }
+
+    @Override
+    protected String getPassword() {
+        return RelationalTestUtil.postgresPassword(postgres);
     }
 
     @Override

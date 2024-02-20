@@ -5,12 +5,16 @@ import corg.io.postgres.mq.writer.MessageWriterTest;
 import org.junit.jupiter.api.AfterEach;
 
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class H2MessageWriterTest extends MessageWriterTest {
     @Override
-    protected Properties getProps() {
-        return RelationalTestUtil.h2Props();
+    protected String getUserName() {
+        return RelationalTestUtil.h2UserName();
+    }
+
+    @Override
+    protected String getPassword() {
+        return RelationalTestUtil.getH2Password();
     }
 
     @Override

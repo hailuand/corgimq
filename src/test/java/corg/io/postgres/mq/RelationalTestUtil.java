@@ -6,7 +6,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public final class RelationalTestUtil {
     private static final String H2_JDBC_URL = "jdbc:h2:mem:TEST_DB" +
@@ -26,11 +25,12 @@ public final class RelationalTestUtil {
         }
     }
 
-    public static Properties jdbcContainerProps(JdbcDatabaseContainer<?> jdbcContainer) {
-        var props = new Properties();
-        props.setProperty("user", jdbcContainer.getUsername());
-        props.setProperty("password", jdbcContainer.getPassword());
-        return props;
+    public static String postgresUserName(JdbcDatabaseContainer<?> jdbcContainer) {
+        return jdbcContainer.getUsername();
+    }
+
+    public static String postgresPassword(JdbcDatabaseContainer<?> jdbcContainer) {
+        return jdbcContainer.getPassword();
     }
 
     // -- H2
@@ -38,11 +38,12 @@ public final class RelationalTestUtil {
         return H2_JDBC_URL;
     }
 
-    public static Properties h2Props() {
-        var props = new Properties();
-        props.setProperty("user", H2_USER_NAME);
-        props.setProperty("password", H2_PASSWORD);
-        return props;
+    public static String h2UserName() {
+        return H2_USER_NAME;
+    }
+
+    public static String getH2Password() {
+        return H2_PASSWORD;
     }
 
     public static void cleanupH2(Connection connection) throws SQLException {
