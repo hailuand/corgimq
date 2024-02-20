@@ -25,10 +25,10 @@ public abstract class MessageWriterTest extends AbstractMessageQueueTableTest {
 
     @Test
     public void testWrite() throws SQLException {
-        assertTrue(this.messageQueue.getPendingMessages(10, getConnection()).isEmpty());
+        assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
         var messages = List.of(createMessage(), createMessage());
         this.messageWriter.write(messages, getConnection());
-        assertEquals(messages, this.messageQueue.getPendingMessages(10, getConnection()));
+        assertEquals(messages, this.messageQueue.read(10, getConnection()));
     }
 
     @Test
@@ -48,9 +48,9 @@ public abstract class MessageWriterTest extends AbstractMessageQueueTableTest {
 
     @Test
     public void testWriteNothing() throws SQLException {
-        assertTrue(this.messageQueue.getPendingMessages(10, getConnection()).isEmpty());
+        assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
         this.messageWriter.write(Collections.emptyList(), getConnection());
-        assertTrue(this.messageQueue.getPendingMessages(10, getConnection()).isEmpty());
+        assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
     }
 
     @Test
@@ -78,7 +78,7 @@ public abstract class MessageWriterTest extends AbstractMessageQueueTableTest {
                 throw new RuntimeException(e);
             }
         });
-        assertEquals(this.messageQueue.getPendingMessages(10, messageQueue.getConnection()), messages);
+        assertEquals(this.messageQueue.read(10, messageQueue.getConnection()), messages);
     }
 
     @Test
@@ -108,7 +108,7 @@ public abstract class MessageWriterTest extends AbstractMessageQueueTableTest {
                 throw new RuntimeException(e);
             }
         }));
-        assertEquals(this.messageQueue.getPendingMessages(10, messageQueue.getConnection()),
+        assertEquals(this.messageQueue.read(10, messageQueue.getConnection()),
                 Collections.emptyList(), "failed txn changes not committed");
     }
 

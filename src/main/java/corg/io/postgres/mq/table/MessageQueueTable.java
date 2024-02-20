@@ -42,7 +42,7 @@ public class MessageQueueTable {
         this.createTableWithSchema();
     }
 
-    public void enqueue(List<Message> messages, Connection conn) throws SQLException {
+    public void push(List<Message> messages, Connection conn) throws SQLException {
         var dml = """
                 INSERT INTO "%s"."%s" ("id", "data", "message_time")
                 VALUES (?, ?, ?)
@@ -61,12 +61,12 @@ public class MessageQueueTable {
             statement.executeBatch();
         }
         catch(SQLException e) {
-            logger.debug("Exception occurred while enqueuing", e);
+            logger.debug("Exception occurred pushing messages", e);
             throw e.getNextException(); // Root exception serves as a wrapper
         }
     }
 
-    public void dequeue(List<Message> messages, Connection conn) throws SQLException {
+    public void pop(List<Message> messages, Connection conn) throws SQLException {
         var dml = """
                     UPDATE "%s"."%s" SET "processing_time" = ?
                     WHERE "id" = ?
@@ -84,7 +84,7 @@ public class MessageQueueTable {
         }
     }
 
-    public List<Message> getPendingMessages(int numMessages, Connection conn) throws SQLException {
+    public List<Message> read(int numMessages, Connection conn) throws SQLException {
         var sql = """
                 SELECT * FROM "%s"."%s"
                 WHERE "processing_time" IS NULL

@@ -43,10 +43,10 @@ public class MessageHandler {
             }
         }, transactionConnection -> {
             try {
-                var messages = this.messageQueueTable.getPendingMessages(this.messageHandlerConfig.maxNumMessages(), transactionConnection);
+                var messages = this.messageQueueTable.read(this.messageHandlerConfig.maxNumMessages(), transactionConnection);
                 if(!messages.isEmpty()) {
                     var handled = handler.apply(MessageHandlerBatch.of(messages, transactionConnection));
-                    this.messageQueueTable.dequeue(handled, transactionConnection);
+                    this.messageQueueTable.pop(handled, transactionConnection);
                 }
                 else {
                     logger.debug("No messages returned to handle");

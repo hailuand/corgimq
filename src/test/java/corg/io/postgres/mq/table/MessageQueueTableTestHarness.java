@@ -29,31 +29,31 @@ public abstract class MessageQueueTableTestHarness extends AbstractMessageQueueT
     }
 
     @Test
-    public void testEnqueue() throws SQLException {
+    public void testPop() throws SQLException {
         assertRowCount(0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
         try(var conn = messageQueue.getConnection()) {
-            messageQueue.enqueue(messages, conn);
+            messageQueue.push(messages, conn);
             assertRowCount(messages.size());
-            var pending = messageQueue.getPendingMessages(10, conn);
+            var pending = messageQueue.read(10, conn);
             assertEquals(messages, pending);
         }
     }
 
     @Test
-    public void testDequeueAndGetPending() throws SQLException {
+    public void testPopAndRead() throws SQLException {
         var messages = List.of(createMessage(), createMessage(), createMessage());
         try(var conn = messageQueue.getConnection()) {
-            messageQueue.enqueue(messages, conn);
+            messageQueue.push(messages, conn);
             assertRowCount(messages.size());
-            var pending = messageQueue.getPendingMessages(10, conn);
+            var pending = messageQueue.read(10, conn);
             assertEquals(messages, pending);
         }
-        // dequeue in another txn
+        // Pop in another txn
         try(var conn = messageQueue.getConnection()) {
-            messageQueue.dequeue(messages, conn);
-            var pendingPostDequeue = messageQueue.getPendingMessages(10, conn);
-            assertTrue(pendingPostDequeue.isEmpty());
+            messageQueue.pop(messages, conn);
+            var pendingPostPop = messageQueue.read(10, conn);
+            assertTrue(pendingPostPop.isEmpty());
         }
         // assert in separate txn
         try(var conn = messageQueue.getConnection(); var st = conn.createStatement()) {

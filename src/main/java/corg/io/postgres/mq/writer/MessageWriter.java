@@ -31,6 +31,6 @@ public class MessageWriter {
             return;
         }
         logger.debug("Writing {} messages", messages.size());
-        this.messageQueueTable.enqueue(messages, conn);
+        this.messageQueueTable.push(messages, conn);
     }
 }
