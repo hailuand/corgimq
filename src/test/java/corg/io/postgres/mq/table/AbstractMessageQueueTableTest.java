@@ -26,11 +26,12 @@ public abstract class AbstractMessageQueueTableTest {
     protected abstract Properties getProps();
     protected abstract String getJdbcUrl();
 
+    protected MessageQueueTable underTest;
+
     protected Connection getConnection() throws SQLException {
         return underTest.getConnection();
     }
 
-    MessageQueueTable underTest;
     @BeforeEach
     public void testSetup() throws SQLException {
         var props = getProps();
@@ -103,7 +104,7 @@ public abstract class AbstractMessageQueueTableTest {
                     underTest.queueTableName()));
             assertTrue(rs.isBeforeFirst());
             if(rs.next()) {
-                var count = rs.getLong("count(*)");
+                var count = rs.getLong(1);
                 assertEquals(expectedRowCount, count, "Row count matches");
             }
         }
