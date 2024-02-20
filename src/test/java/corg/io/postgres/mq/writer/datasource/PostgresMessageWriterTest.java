@@ -35,6 +35,11 @@ public class PostgresMessageWriterTest extends MessageWriterTest {
         return postgres.getJdbcUrl();
     }
 
+    @Override
+    protected void assertUniquePrimaryKeyViolation(SQLException exception) {
+        RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
+    }
+
     @AfterEach
     public void testTearDown() throws SQLException {
         try(var conn = getConnection()) {

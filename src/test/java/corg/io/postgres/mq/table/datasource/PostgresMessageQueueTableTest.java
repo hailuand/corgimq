@@ -9,7 +9,6 @@ import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.SQLException;
-import java.util.Properties;
 
 @Testcontainers(disabledWithoutDocker = true)
 public class PostgresMessageQueueTableTest extends MessageQueueTableTestHarness {
@@ -34,6 +33,11 @@ public class PostgresMessageQueueTableTest extends MessageQueueTableTestHarness 
     @Override
     protected String getJdbcUrl() {
         return postgres.getJdbcUrl();
+    }
+
+    @Override
+    protected void assertUniquePrimaryKeyViolation(SQLException exception) {
+        RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
     }
 
     @AfterEach

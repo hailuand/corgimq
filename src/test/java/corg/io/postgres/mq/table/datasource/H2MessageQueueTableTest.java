@@ -23,6 +23,11 @@ public class H2MessageQueueTableTest extends MessageQueueTableTestHarness {
         return RelationalTestUtil.h2JdbcUrl();
     }
 
+    @Override
+    protected void assertUniquePrimaryKeyViolation(SQLException exception) {
+        RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
+    }
+
     @AfterEach
     public void testTearDown() throws SQLException {
         try(var conn = getConnection()) {

@@ -1,11 +1,17 @@
 package corg.io.postgres.mq;
 
+import org.h2.api.ErrorCode;
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
+import org.postgresql.util.PSQLException;
+import org.postgresql.util.PSQLState;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public final class RelationalTestUtil {
     private static final String H2_JDBC_URL = "jdbc:h2:mem:TEST_DB" +
@@ -33,6 +39,11 @@ public final class RelationalTestUtil {
         return jdbcContainer.getPassword();
     }
 
+    public static void assertPostgresPrimaryKeyViolation(SQLException sqlException) {
+        assertInstanceOf(PSQLException.class, sqlException);
+        assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), sqlException.getSQLState());
+    }
+
     // -- H2
     public static String h2JdbcUrl() {
         return H2_JDBC_URL;
@@ -50,5 +61,10 @@ public final class RelationalTestUtil {
         try(var st = connection.createStatement()) {
             st.execute("DROP ALL OBJECTS");
         }
+    }
+
+    public static void assertH2PrimaryKeyViolation(SQLException exception) {
+        assertInstanceOf(JdbcSQLIntegrityConstraintViolationException.class, exception);
+        assertEquals(ErrorCode.DUPLICATE_KEY_1, Integer.parseInt(exception.getSQLState()), "unique violation");
     }
 }

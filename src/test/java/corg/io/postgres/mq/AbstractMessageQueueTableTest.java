@@ -20,6 +20,7 @@ public abstract class AbstractMessageQueueTableTest {
     protected abstract String getUserName();
     protected abstract String getPassword();
     protected abstract String getJdbcUrl();
+    protected abstract void assertUniquePrimaryKeyViolation(SQLException exception);
 
     protected MessageQueueTable messageQueue;
 
