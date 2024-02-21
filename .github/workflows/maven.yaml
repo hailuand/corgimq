@@ -18,7 +18,7 @@ jobs:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '21'
           cache: maven
-      - name: Build & test 🚀
-        run: mvn -B verify
+      - name: Build & test
+        run: mvn -e -B verify
       - name: Submit Dependency Snapshot
         uses: advanced-security/maven-dependency-submission-action@v3
