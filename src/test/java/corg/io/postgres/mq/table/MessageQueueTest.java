@@ -8,7 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -58,18 +57,13 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             while(rs.next()) {
                 var id = rs.getString("id");
                 var data = rs.getString("data");
-                var messageTime = rs.getTimestamp("message_time");
-                var processTime = rs.getTimestamp("processing_time");
-                processed.add(Message.of(id, data, messageTime.toInstant(), Optional.of(processTime.toInstant())));
+                processed.add(Message.of(id, data));
             }
             var messagesMap = messages.stream().collect(Collectors.toMap(Message::id, Function.identity()));
             for(var processedMessage : processed) {
                 assertTrue(messagesMap.containsKey(processedMessage.id()));
                 var unprocessedMessage = messagesMap.get(processedMessage.id());
-                assertEquals(processedMessage.messageTime(), unprocessedMessage.messageTime());
-                assertEquals(unprocessedMessage.data(), processedMessage.data());
-                assertTrue(unprocessedMessage.processingTime().isEmpty());
-                assertTrue(processedMessage.processingTime().isPresent());
+                assertEquals(unprocessedMessage, processedMessage);
             }
         }
     }

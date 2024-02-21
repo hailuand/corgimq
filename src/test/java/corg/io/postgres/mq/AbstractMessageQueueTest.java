@@ -9,10 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -48,7 +45,7 @@ public abstract class AbstractMessageQueueTest {
                     "value": "%s"
                 }
                 """.formatted(faker.onePiece().character(), faker.onePiece().akumasNoMi());
-        return Message.of(UUID.randomUUID().toString(), data, Instant.now(Clock.systemUTC()), Optional.empty());
+        return Message.of(UUID.randomUUID().toString(), data);
     }
 
     protected void assertMessages(List<Message> expected, List<Message> actual) {

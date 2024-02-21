@@ -11,13 +11,9 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 public class MessageQueue implements Closeable, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
@@ -45,8 +41,8 @@ public class MessageQueue implements Closeable, AutoCloseable {
 
     public void push(List<Message> messages, Connection conn) throws SQLException {
         var dml = """
-                INSERT INTO "%s"."%s" ("id", "data", "message_time")
-                VALUES (?, ?, ?)
+                INSERT INTO "%s"."%s" ("id", "data")
+                VALUES (?, ?)
                 """.formatted(
                 this.tableSchemaName(),
                 this.queueTableName()
@@ -56,7 +52,6 @@ public class MessageQueue implements Closeable, AutoCloseable {
             for(var message : messages) {
                 statement.setString(1, message.id());
                 statement.setString(2, message.data());
-                statement.setTimestamp(3, Timestamp.from(message.messageTime()));
                 statement.addBatch();
             }
             statement.executeBatch();
@@ -69,16 +64,14 @@ public class MessageQueue implements Closeable, AutoCloseable {
 
     public void pop(List<Message> messages, Connection conn) throws SQLException {
         var dml = """
-                    UPDATE "%s"."%s" SET "processing_time" = ?
+                    UPDATE "%s"."%s" SET "processing_time" = CURRENT_TIMESTAMP
                     WHERE "id" = ?
                     AND "processing_time" IS NULL
                     """.formatted(this.tableSchemaName(), this.queueTableName());
         logger.debug(dml);
         try(var statement = conn.prepareStatement(dml)) {
-            var processingTime = Instant.now(Clock.systemUTC());
             for(var message : messages) {
-                statement.setTimestamp(1, Timestamp.from(processingTime));
-                statement.setString(2, message.id());
+                statement.setString(1, message.id());
                 statement.addBatch();
             }
             statement.executeBatch();
@@ -104,8 +97,7 @@ public class MessageQueue implements Closeable, AutoCloseable {
             while(rs.next()) {
                 var id = rs.getString("id");
                 var data = rs.getString("data");
-                var messageTime = rs.getTimestamp("message_time").toInstant();
-                pending.add(Message.of(id, data, messageTime, Optional.empty()));
+                pending.add(Message.of(id, data));
             }
         }
         return pending;
@@ -129,8 +121,8 @@ public class MessageQueue implements Closeable, AutoCloseable {
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" TEXT PRIMARY KEY,
                     "data" TEXT NOT NULL,
-                    "message_time" TIMESTAMP(6) WITHOUT TIME ZONE NOT NULL,
-                    "processing_time" TIMESTAMP(6) WITHOUT TIME ZONE
+                    "message_time" TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    "processing_time" TIMESTAMP WITHOUT TIME ZONE
                 );
                 """.formatted(
                 this.tableSchemaName(),

@@ -4,9 +4,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
-import java.time.Instant;
-import java.util.Optional;
-
 @Value.Immutable
 @Value.Style(
         typeAbstract = "*Abstract",
@@ -23,10 +20,4 @@ public interface MessageAbstract {
 
     @Value.Parameter
     String data();
-
-    @Value.Parameter
-    Instant messageTime();
-
-    @Value.Parameter
-    Optional<Instant> processingTime();
 }
