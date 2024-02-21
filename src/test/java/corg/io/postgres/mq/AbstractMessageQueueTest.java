@@ -52,11 +52,16 @@ public abstract class AbstractMessageQueueTest {
     }
 
     protected void assertMessages(List<Message> expected, List<Message> actual) {
+        assertMessages(expected, actual, null);
+    }
+
+    protected void assertMessages(List<Message> expected, List<Message> actual, String assertionMessage) {
+        String providedMessage = assertionMessage == null ? "expected and actual messages equal" : assertionMessage;
         assertEquals(expected.size(), actual.size());
         var actualMap = actual.stream().collect(Collectors.toMap(Message::id, Function.identity()));
         for(var message : expected) {
             var actualMessage = actualMap.get(message.id());
-            assertEquals(message, actualMessage, "expected and actual messages equal");
+            assertEquals(message, actualMessage, providedMessage);
         }
     }
 }

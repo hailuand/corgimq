@@ -30,7 +30,6 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             messageQueue.push(messages, conn);
             assertRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
-            System.out.println("Expected:\n%s\nActual:\n%s".formatted(messages,pending));
             assertMessages(messages, pending);
         }
     }
@@ -122,7 +121,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
                 throw new RuntimeException(e);
             }
         });
-        assertEquals(this.messageQueue.read(10, messageQueue.getConnection()), messages);
+        assertMessages(this.messageQueue.read(10, messageQueue.getConnection()), messages);
     }
 
     @Test
@@ -152,7 +151,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
                 throw new RuntimeException(e);
             }
         }));
-        assertEquals(this.messageQueue.read(10, messageQueue.getConnection()),
+        assertMessages(this.messageQueue.read(10, messageQueue.getConnection()),
                 Collections.emptyList(), "failed txn changes not committed");
     }
 
