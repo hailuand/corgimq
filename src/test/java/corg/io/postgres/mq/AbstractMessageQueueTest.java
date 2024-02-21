@@ -11,8 +11,13 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class AbstractMessageQueueTest {
     protected static final String QUEUE_NAME = "corgi";
@@ -44,5 +49,14 @@ public abstract class AbstractMessageQueueTest {
                 }
                 """.formatted(faker.onePiece().character(), faker.onePiece().akumasNoMi());
         return Message.of(UUID.randomUUID().toString(), data, Instant.now(Clock.systemUTC()), Optional.empty());
+    }
+
+    protected void assertMessages(List<Message> expected, List<Message> actual) {
+        assertEquals(expected.size(), actual.size());
+        var actualMap = actual.stream().collect(Collectors.toMap(Message::id, Function.identity()));
+        for(var message : expected) {
+            var actualMessage = actualMap.get(message.id());
+            assertEquals(message, actualMessage, "expected and actual messages equal");
+        }
     }
 }

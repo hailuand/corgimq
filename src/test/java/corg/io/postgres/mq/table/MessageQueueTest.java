@@ -31,7 +31,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             assertRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
             System.out.println("Expected:\n%s\nActual:\n%s".formatted(messages,pending));
-            assertEquals(messages, pending);
+            assertMessages(messages, pending);
         }
     }
 
@@ -42,7 +42,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             messageQueue.push(messages, conn);
             assertRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
-            assertEquals(messages, pending);
+            assertMessages(messages, pending);
         }
         // Pop in another txn
         try(var conn = messageQueue.getConnection()) {
