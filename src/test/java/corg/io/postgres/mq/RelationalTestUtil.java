@@ -14,8 +14,7 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class RelationalTestUtil {
-    private static final String H2_JDBC_URL = "jdbc:h2:mem:TEST_DB" +
-            ";DATABASE_TO_UPPER=false;mode=mysql;LOCK_TIMEOUT=10000;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
+    private static final String H2_JDBC_URL = "jdbc:h2:mem:TEST_DB;DATABASE_TO_UPPER=false;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
     private static final String H2_USER_NAME = "sa";
     private static final String H2_PASSWORD = "";
 
