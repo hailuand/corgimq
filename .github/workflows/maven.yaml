@@ -1,0 +1,22 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '21'
+          cache: maven
+      - name: Build & test 🚀
+        run: mvn -B verify
+      - name: Maven dependency tree submission 🔎
+        uses: advanced-security/maven-dependency-submission-action@v4
