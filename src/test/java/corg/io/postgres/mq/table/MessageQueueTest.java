@@ -36,6 +36,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             messageQueue.push(messages, conn);
             assertRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
+            System.out.println("Results: " + pending);
             assertEquals(messages, pending);
         }
     }
