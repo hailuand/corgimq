@@ -19,6 +19,6 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Build & test
-        run: mvn -e -B verify
+        run: mvn -e -B verify --file pom.xml
       - name: Submit Dependency Snapshot
         uses: advanced-security/maven-dependency-submission-action@v4.0.0
