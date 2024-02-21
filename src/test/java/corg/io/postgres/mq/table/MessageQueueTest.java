@@ -2,7 +2,6 @@ package corg.io.postgres.mq.table;
 
 import corg.io.postgres.mq.AbstractMessageQueueTest;
 import corg.io.postgres.mq.model.message.Message;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -18,11 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("SqlSourceToSinkFlow")
 public abstract class MessageQueueTest extends AbstractMessageQueueTest {
 
-    @BeforeEach
-    public void setupHarness() throws SQLException {
-        messageQueue.initSources();
-    }
-
     @Test
     public void testInitSources() throws SQLException {
         assertRowCount(0);
@@ -36,7 +30,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             messageQueue.push(messages, conn);
             assertRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
-            System.out.println("Results: " + pending);
+            System.out.println("Expected:\n%s\nActual:\n%s".formatted(messages,pending));
             assertEquals(messages, pending);
         }
     }

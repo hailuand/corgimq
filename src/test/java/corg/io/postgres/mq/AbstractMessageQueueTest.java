@@ -25,10 +25,11 @@ public abstract class AbstractMessageQueueTest {
     protected MessageQueue messageQueue;
 
     @BeforeEach
-    public void testSetup() {
+    public void testSetup() throws SQLException {
         var dbConfig = DbConfig.of(getJdbcUrl(), getUserName(), getPassword());
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
-        messageQueue = MessageQueue.of(dbConfig, mqConfig);
+        this.messageQueue = MessageQueue.of(dbConfig, mqConfig);
+        this.messageQueue.initSources();
     }
 
     protected Connection getConnection() throws SQLException {

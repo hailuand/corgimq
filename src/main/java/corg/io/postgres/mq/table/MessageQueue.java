@@ -8,6 +8,7 @@ import corg.io.postgres.mq.model.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class MessageQueue {
+public class MessageQueue implements Closeable, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
 
     private final MessageQueueConfig messageQueueConfig;
@@ -140,5 +141,10 @@ public class MessageQueue {
             logger.debug(ddl);
             statement.execute(ddl);
         }
+    }
+
+    @Override
+    public void close() {
+        this.hikariDataSource.close();
     }
 }
