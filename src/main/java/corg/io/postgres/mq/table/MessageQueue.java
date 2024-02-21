@@ -129,8 +129,8 @@ public class MessageQueue implements Closeable, AutoCloseable {
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" TEXT PRIMARY KEY,
                     "data" TEXT NOT NULL,
-                    "message_time" TIMESTAMP(6) NOT NULL,
-                    "processing_time" TIMESTAMP(6)
+                    "message_time" TIMESTAMP(6) WITHOUT TIME ZONE NOT NULL,
+                    "processing_time" TIMESTAMP(6) WITHOUT TIME ZONE
                 );
                 """.formatted(
                 this.tableSchemaName(),
