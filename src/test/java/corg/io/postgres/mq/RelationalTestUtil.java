@@ -5,6 +5,7 @@ import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -39,8 +40,25 @@ public final class RelationalTestUtil {
     }
 
     public static void assertPostgresPrimaryKeyViolation(SQLException sqlException) {
-        assertInstanceOf(PSQLException.class, sqlException);
-        assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), sqlException.getSQLState());
+        assertNotNull(sqlException.getNextException());
+        var psqlException = sqlException.getNextException();
+        assertInstanceOf(PSQLException.class, psqlException);
+        assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), psqlException.getSQLState());
+    }
+
+    // -- MySQL
+    public static JdbcDatabaseContainer<?> mySQLContainer(String schemaName) {
+        return new MySQLContainer<>(DockerImageName.parse("mysql")
+                .withTag("8.3.0"))
+                .withUsername("root")
+                .withPassword("")
+                .withEnv("MYSQL_ROOT_HOST", "%");
+    }
+
+    public static void cleanupMySql(Connection connection, String schema) throws SQLException {
+        try(var st = connection.createStatement()) {
+            st.execute("DROP SCHEMA %s".formatted(schema));
+        }
     }
 
     // -- H2
@@ -63,7 +81,9 @@ public final class RelationalTestUtil {
     }
 
     public static void assertH2PrimaryKeyViolation(SQLException exception) {
-        assertInstanceOf(JdbcSQLIntegrityConstraintViolationException.class, exception);
-        assertEquals(ErrorCode.DUPLICATE_KEY_1, Integer.parseInt(exception.getSQLState()), "unique violation");
+        assertNotNull(exception.getNextException());
+        var h2Exception = exception.getNextException();
+        assertInstanceOf(JdbcSQLIntegrityConstraintViolationException.class, h2Exception);
+        assertEquals(ErrorCode.DUPLICATE_KEY_1, Integer.parseInt(h2Exception.getSQLState()), "unique violation");
     }
 }

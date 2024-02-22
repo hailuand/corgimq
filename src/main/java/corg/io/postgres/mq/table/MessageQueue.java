@@ -56,10 +56,6 @@ public class MessageQueue implements Closeable, AutoCloseable {
             }
             statement.executeBatch();
         }
-        catch(SQLException e) {
-            logger.debug("Exception occurred pushing messages", e);
-            throw e.getNextException(); // Root exception serves as a wrapper
-        }
     }
 
     public void pop(List<Message> messages, Connection conn) throws SQLException {
@@ -97,7 +93,7 @@ public class MessageQueue implements Closeable, AutoCloseable {
             while(rs.next()) {
                 var id = rs.getString("id");
                 var data = rs.getString("data");
-                pending.add(Message.of(id, data));
+                pending.add(Message.builder().id(id).data(data).build());
             }
         }
         return pending;
@@ -115,23 +111,25 @@ public class MessageQueue implements Closeable, AutoCloseable {
     }
 
     private void createTableWithSchema() throws SQLException {
-        var ddl = """
+        var createSchemaDdl = """
                 CREATE SCHEMA IF NOT EXISTS "%s";
-                
+                """.formatted(this.tableSchemaName());
+        var createTableddl = """                
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
-                    "id" TEXT PRIMARY KEY,
+                    "id" VARCHAR(36) PRIMARY KEY,
                     "data" TEXT NOT NULL,
-                    "message_time" TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                    "processing_time" TIMESTAMP WITHOUT TIME ZONE
+                    "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    "processing_time" TIMESTAMP
                 );
                 """.formatted(
-                this.tableSchemaName(),
                 this.tableSchemaName(),
                 this.queueTableName()
         );
         try(var conn = getConnection(); var statement = conn.createStatement()) {
-            logger.debug(ddl);
-            statement.execute(ddl);
+            logger.debug(createSchemaDdl);
+            statement.execute(createSchemaDdl);
+            logger.debug(createTableddl);
+            statement.execute(createTableddl);
         }
     }
 

@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -31,6 +30,10 @@ public abstract class AbstractMessageQueueTest {
         var dbConfig = DbConfig.of(getJdbcUrl(), getUserName(), getPassword());
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageQueue = MessageQueue.of(dbConfig, mqConfig);
+        this.initSources();
+    }
+
+    protected void initSources() throws SQLException {
         this.messageQueue.initSources();
     }
 
@@ -45,7 +48,7 @@ public abstract class AbstractMessageQueueTest {
                     "value": "%s"
                 }
                 """.formatted(faker.onePiece().character(), faker.onePiece().akumasNoMi());
-        return Message.of(UUID.randomUUID().toString(), data);
+        return Message.of(data);
     }
 
     protected void assertMessages(List<Message> expected, List<Message> actual) {

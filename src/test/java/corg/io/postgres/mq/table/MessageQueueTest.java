@@ -57,7 +57,7 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             while(rs.next()) {
                 var id = rs.getString("id");
                 var data = rs.getString("data");
-                processed.add(Message.of(id, data));
+                processed.add(Message.builder().id(id).data(data).build());
             }
             var messagesMap = messages.stream().collect(Collectors.toMap(Message::id, Function.identity()));
             for(var processedMessage : processed) {
