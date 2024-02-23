@@ -33,6 +33,9 @@ public class MessageQueue implements Closeable, AutoCloseable {
         hikariConfig.setJdbcUrl(dbConfig.jdbcUrl());
         hikariConfig.setUsername(dbConfig.username());
         hikariConfig.setPassword(dbConfig.password());
+        hikariConfig.setMaximumPoolSize(dbConfig.maxConnectionPoolSize());
+        hikariConfig.setMaxLifetime(dbConfig.connectionMaxLifetime());
+        hikariConfig.setPoolName("CorgiMQPool");
         this.hikariDataSource = new HikariDataSource(hikariConfig);
     }
 
