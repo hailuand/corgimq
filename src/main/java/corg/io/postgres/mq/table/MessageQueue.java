@@ -7,6 +7,7 @@ import corg.io.postgres.mq.model.config.MessageQueueConfig;
 import corg.io.postgres.mq.model.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.io.Closeable;
 import java.sql.Connection;
@@ -40,6 +41,12 @@ public class MessageQueue implements Closeable, AutoCloseable {
     }
 
     public void push(List<Message> messages, Connection conn) throws SQLException {
+        configureMDC();
+        if(messages.isEmpty()) {
+            logger.info("No messages provided to push.");
+            return;
+        }
+
         var dml = """
                 INSERT INTO "%s"."%s" ("id", "data")
                 VALUES (?, ?)
@@ -47,6 +54,7 @@ public class MessageQueue implements Closeable, AutoCloseable {
                 this.tableSchemaName(),
                 this.queueTableName()
         );
+        logger.info("Pushing {} messages", messages.size());
         logger.debug(dml);
         try(var statement = conn.prepareStatement(dml)) {
             for(var message : messages) {
@@ -56,15 +64,18 @@ public class MessageQueue implements Closeable, AutoCloseable {
             }
             statement.executeBatch();
         }
+        MDC.clear();
     }
 
     public void pop(List<Message> messages, Connection conn) throws SQLException {
+        configureMDC();
         var dml = """
                     UPDATE "%s"."%s" SET "processing_time" = CURRENT_TIMESTAMP
                     WHERE "id" = ?
                     AND "processing_time" IS NULL
                     """.formatted(this.tableSchemaName(), this.queueTableName());
         logger.debug(dml);
+        logger.info("Popping {} messages", messages.size());
         try(var statement = conn.prepareStatement(dml)) {
             for(var message : messages) {
                 statement.setString(1, message.id());
@@ -72,9 +83,11 @@ public class MessageQueue implements Closeable, AutoCloseable {
             }
             statement.executeBatch();
         }
+        MDC.clear();
     }
 
     public List<Message> read(int numMessages, Connection conn) throws SQLException {
+        configureMDC();
         var sql = """
                 SELECT * FROM "%s"."%s"
                 WHERE "processing_time" IS NULL
@@ -86,9 +99,10 @@ public class MessageQueue implements Closeable, AutoCloseable {
                 this.queueTableName(),
                 numMessages
         );
+        logger.debug(sql);
+        logger.info("Reading messages...");
         List<Message> pending = new ArrayList<>();
         try(var statement = conn.createStatement()) {
-            logger.debug(sql);
             var rs = statement.executeQuery(sql);
             while(rs.next()) {
                 var id = rs.getString("id");
@@ -96,6 +110,8 @@ public class MessageQueue implements Closeable, AutoCloseable {
                 pending.add(Message.builder().id(id).data(data).build());
             }
         }
+        logger.info("{} messages received", pending.size());
+        MDC.clear();
         return pending;
     }
 
@@ -111,6 +127,7 @@ public class MessageQueue implements Closeable, AutoCloseable {
     }
 
     private void createTableWithSchema() throws SQLException {
+        configureMDC();
         var createSchemaDdl = """
                 CREATE SCHEMA IF NOT EXISTS "%s";
                 """.formatted(this.tableSchemaName());
@@ -131,6 +148,11 @@ public class MessageQueue implements Closeable, AutoCloseable {
             logger.debug(createTableddl);
             statement.execute(createTableddl);
         }
+        MDC.clear();
+    }
+
+    private void configureMDC() {
+        MDC.put("queue", " - %s".formatted(this.messageQueueConfig.queueName()));
     }
 
     @Override

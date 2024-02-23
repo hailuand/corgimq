@@ -43,6 +43,6 @@ public class MySQLMessageQueueTest extends MessageQueueTest {
 
     @Override
     protected void assertUniquePrimaryKeyViolation(SQLException exception) {
-        System.out.println(exception);
+        RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
     }
 }

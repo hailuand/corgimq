@@ -1,5 +1,6 @@
 package corg.io.postgres.mq;
 
+import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import org.h2.api.ErrorCode;
 import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.postgresql.util.PSQLException;
@@ -9,8 +10,10 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,6 +56,13 @@ public final class RelationalTestUtil {
                 .withUsername("root")
                 .withPassword("")
                 .withEnv("MYSQL_ROOT_HOST", "%");
+    }
+
+    public static void assertMySQLPrimaryKeyViolation(SQLException sqlException) {
+        assertInstanceOf(BatchUpdateException.class, sqlException);
+        assertEquals(MysqlErrorNumbers.SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION, sqlException.getSQLState());
+        assertNotNull(sqlException.getCause());
+        assertInstanceOf(SQLIntegrityConstraintViolationException.class, sqlException.getCause());
     }
 
     public static void cleanupMySql(Connection connection, String schema) throws SQLException {
