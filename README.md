@@ -1,4 +1,4 @@
-[![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg)](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml) ![Coverage](.github/badges/jacoco.svg)
+[![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg)](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml)
 
 # CorgiMQ
 ![mascot.jpg](mascot.jpg)
