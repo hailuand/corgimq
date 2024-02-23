@@ -26,5 +26,7 @@ jobs:
         if: success() || failure() # always run even if the previous step fails
         with:
           report_paths: '**/target/surefire-reports/TEST-*.xml'
+      - name: Generate JaCoCo Badge
+        uses: cicirello/jacoco-badge-generator@v2
       - name: Submit dependency snapshot
         uses: advanced-security/maven-dependency-submission-action@v4.0.0
