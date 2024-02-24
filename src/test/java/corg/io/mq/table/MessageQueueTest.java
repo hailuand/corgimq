@@ -3,7 +3,8 @@ package corg.io.mq.table;
 import corg.io.mq.AbstractMessageQueueTest;
 import corg.io.mq.model.message.Message;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -15,31 +16,38 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("SqlSourceToSinkFlow")
-public abstract class MessageQueueTest extends AbstractMessageQueueTest {
-
-    @Test
-    public void testInitSources() throws SQLException {
-        assertRowCount(0);
+public class MessageQueueTest extends AbstractMessageQueueTest {
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testInitSources(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        assertTableRowCount(0);
+        tearDown(dataSource);
     }
 
-    @Test
-    public void testPop() throws SQLException {
-        assertRowCount(0);
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testPop(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        assertTableRowCount(0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        try(var conn = messageQueue.getConnection()) {
+        try(var conn = this.messageQueue.getConnection()) {
             messageQueue.push(messages, conn);
-            assertRowCount(messages.size());
+            assertTableRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
             assertMessages(messages, pending);
         }
+        tearDown(dataSource);
     }
 
-    @Test
-    public void testPopAndRead() throws SQLException {
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testPopAndRead(DataSource dataSource) throws SQLException {
+        configure(dataSource);
         var messages = List.of(createMessage(), createMessage(), createMessage());
         try(var conn = messageQueue.getConnection()) {
             messageQueue.push(messages, conn);
-            assertRowCount(messages.size());
+            assertTableRowCount(messages.size());
             var pending = messageQueue.read(10, conn);
             assertMessages(messages, pending);
         }
@@ -67,32 +75,41 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
                 assertEquals(unprocessedMessage, processedMessage);
             }
         }
+        tearDown(dataSource);
     }
 
-    @Test
-    public void testWriteDupes() throws SQLException {
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testWriteDupes(DataSource dataSource) throws SQLException {
+        configure(dataSource);
         var messages = List.of(createMessage(), createMessage());
-        this.messageQueue.push(messages, getConnection());
+        this.messageQueue.push(messages, this.messageQueue.getConnection());
         assertThrows(SQLException.class, () -> {
             try {
-                this.messageQueue.push(messages, getConnection());
+                this.messageQueue.push(messages, this.messageQueue.getConnection());
             }
             catch(SQLException e) {
-                assertUniquePrimaryKeyViolation(e);
+                assertUniquePrimaryKeyViolation(dataSource, e);
                 throw e;
             }
         });
+        tearDown(dataSource);
     }
 
-    @Test
-    public void testPushNothing() throws SQLException {
-        Assertions.assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
-        this.messageQueue.push(Collections.emptyList(), getConnection());
-        Assertions.assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testPushNothing(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        Assertions.assertTrue(this.messageQueue.read(10, this.messageQueue.getConnection()).isEmpty());
+        this.messageQueue.push(Collections.emptyList(), this.messageQueue.getConnection());
+        Assertions.assertTrue(this.messageQueue.read(10, this.messageQueue.getConnection()).isEmpty());
+        tearDown(dataSource);
     }
 
-    @Test
-    public void testPushTransaction() throws SQLException {
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testPushTransaction(DataSource dataSource) throws SQLException {
+        configure(dataSource);
         String secondaryTableName = "varieties";
         createSecondaryTable(secondaryTableName);
         var messages = List.of(createMessage(), createMessage());
@@ -117,10 +134,13 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
             }
         });
         assertMessages(this.messageQueue.read(10, messageQueue.getConnection()), messages);
+        tearDown(dataSource);
     }
 
-    @Test
-    public void testPushTransactionFails() throws SQLException {
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testPushTransactionFails(DataSource dataSource) throws SQLException {
+        configure(dataSource);
         String secondaryTableName = "varieties";
         createSecondaryTable(secondaryTableName);
         assertThrows(RuntimeException.class, () -> new TransactionManager().executeInTransaction(() -> {
@@ -142,12 +162,13 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
                 this.messageQueue.push(messages, conn);
                 this.messageQueue.push(messages, conn); // trigger pk constraint violation
             } catch (SQLException e) {
-                assertUniquePrimaryKeyViolation(e);
+                assertUniquePrimaryKeyViolation(dataSource, e);
                 throw new RuntimeException(e);
             }
         }));
         assertMessages(this.messageQueue.read(10, messageQueue.getConnection()),
                 Collections.emptyList(), "failed txn changes not committed");
+        tearDown(dataSource);
     }
 
     private void createSecondaryTable(String secondaryTableName) throws SQLException {
@@ -161,18 +182,6 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
                     messageQueue.tableSchemaName(),
                     secondaryTableName);
             st.execute(ddl);
-        }
-    }
-
-    private void assertRowCount(int expectedRowCount) throws SQLException {
-        try(var conn = messageQueue.getConnection(); var st = conn.createStatement()) {
-            var rs = st.executeQuery("SELECT COUNT(*) from \"%s\".\"%s\"".formatted(messageQueue.tableSchemaName(),
-                    messageQueue.queueTableName()));
-            Assertions.assertTrue(rs.isBeforeFirst());
-            if(rs.next()) {
-                var count = rs.getLong(1);
-                Assertions.assertEquals(expectedRowCount, count, "Row count matches");
-            }
         }
     }
 }

@@ -12,5 +12,8 @@ import org.immutables.value.Value;
 )
 public interface MessageHandlerConfigAbstract {
     @Value.Parameter
-    int maxNumMessages();
+    @Value.Default
+    default int maxNumMessages() {
+        return 10;
+    }
 }
