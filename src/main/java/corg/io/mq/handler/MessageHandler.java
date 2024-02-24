@@ -1,6 +1,6 @@
 package corg.io.mq.handler;
 
-import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.DatabaseConfig;
 import corg.io.mq.model.config.MessageHandlerConfig;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
@@ -22,12 +22,12 @@ public class MessageHandler {
     private final MessageHandlerConfig messageHandlerConfig;
     private final TransactionManager transactionManager;
 
-    public static MessageHandler of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig,
-                                                 MessageHandlerConfig messageHandlerConfig) {
+    public static MessageHandler of(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig,
+                                    MessageHandlerConfig messageHandlerConfig) {
         return new MessageHandler(dbConfig, messageQueueConfig, messageHandlerConfig);
     }
 
-    private MessageHandler(DbConfig dbConfig, MessageQueueConfig messageQueueConfig,
+    private MessageHandler(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig,
                            MessageHandlerConfig messageHandlerConfig) {
         this.messageQueue = MessageQueue.of(dbConfig, messageQueueConfig);
         this.messageHandlerConfig = Objects.requireNonNull(messageHandlerConfig);

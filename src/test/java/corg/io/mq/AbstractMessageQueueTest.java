@@ -1,10 +1,11 @@
 package corg.io.mq;
 
-import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.DatabaseConfig;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
 import corg.io.mq.table.MessageQueue;
 import net.datafaker.Faker;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.sql.Connection;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class AbstractMessageQueueTest {
-    protected static final String QUEUE_NAME = "corgi";
+    protected static final String QUEUE_NAME = "Test_Queue";
     private static final Faker faker = new Faker();
     protected abstract String getUserName();
     protected abstract String getPassword();
@@ -27,10 +28,15 @@ public abstract class AbstractMessageQueueTest {
 
     @BeforeEach
     public void testSetup() throws SQLException {
-        var dbConfig = DbConfig.of(getJdbcUrl(), getUserName(), getPassword());
+        var dbConfig = DatabaseConfig.of(getJdbcUrl(), getUserName(), getPassword());
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageQueue = MessageQueue.of(dbConfig, mqConfig);
         this.initSources();
+    }
+
+    @AfterEach
+    public void testShutDown() {
+        this.messageQueue.close();
     }
 
     protected void initSources() throws SQLException {

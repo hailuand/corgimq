@@ -2,7 +2,7 @@ package corg.io.mq.table;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.DatabaseConfig;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
 import org.slf4j.Logger;
@@ -22,11 +22,11 @@ public class MessageQueue implements Closeable, AutoCloseable {
     private final MessageQueueConfig messageQueueConfig;
     private final HikariDataSource hikariDataSource;
 
-    public static MessageQueue of(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+    public static MessageQueue of(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         return new MessageQueue(dbConfig, messageQueueConfig);
     }
 
-    private MessageQueue(DbConfig dbConfig, MessageQueueConfig messageQueueConfig) {
+    private MessageQueue(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         Objects.requireNonNull(dbConfig);
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
         HikariConfig hikariConfig = new HikariConfig();
@@ -123,17 +123,17 @@ public class MessageQueue implements Closeable, AutoCloseable {
     }
 
     public String tableSchemaName() {
-        return "corgio";
+        return this.messageQueueConfig.schemaName();
     }
     public String queueTableName() {
-        return "%s_mq".formatted(this.messageQueueConfig.queueName());
+        return "%s_q".formatted(this.messageQueueConfig.queueName());
     }
 
     private void createTableWithSchema() throws SQLException {
         configureMDC();
         var createSchemaDdl = """
                 CREATE SCHEMA IF NOT EXISTS "%s";
-                """.formatted(this.tableSchemaName());
+                """.formatted(this.messageQueueConfig.schemaName());
         var createTableddl = """                
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" VARCHAR(36) PRIMARY KEY,

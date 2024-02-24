@@ -13,4 +13,9 @@ import org.immutables.value.Value;
 public interface MessageQueueConfigAbstract {
     @Value.Parameter
     String queueName();
+
+    @Value.Default
+    default String schemaName() {
+        return "cmq";
+    };
 }

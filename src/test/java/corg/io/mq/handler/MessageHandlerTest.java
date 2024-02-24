@@ -1,7 +1,7 @@
 package corg.io.mq.handler;
 
 import corg.io.mq.AbstractMessageQueueTest;
-import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.DatabaseConfig;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.config.MessageHandlerConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +14,7 @@ public abstract class MessageHandlerTest extends AbstractMessageQueueTest {
 
     @BeforeEach
     public void setupMessageHandlerTest() {
-        var dbConfig = DbConfig.of(getJdbcUrl(), getUserName(), getPassword());
+        var dbConfig = DatabaseConfig.of(getJdbcUrl(), getUserName(), getPassword());
         var mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         var mhConfig = MessageHandlerConfig.of(30);
         this.messageHandler = MessageHandler.of(dbConfig, mqConfig, mhConfig);

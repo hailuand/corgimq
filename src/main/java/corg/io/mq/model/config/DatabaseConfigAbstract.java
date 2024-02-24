@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
         optionalAcceptNullable = true,
         strictBuilder = true
 )
-public interface DbConfigAbstract {
+public interface DatabaseConfigAbstract {
     @Value.Parameter
     String jdbcUrl();
 
