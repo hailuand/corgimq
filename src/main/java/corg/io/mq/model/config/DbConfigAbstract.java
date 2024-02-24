@@ -1,4 +1,4 @@
-package corg.io.postgres.mq.model.config;
+package corg.io.mq.model.config;
 
 import org.immutables.value.Value;
 

@@ -1,4 +1,4 @@
-package corg.io.postgres.mq.table;
+package corg.io.mq.table;
 
 import java.sql.Connection;
 import java.sql.SQLException;

@@ -1,12 +1,12 @@
-package corg.io.postgres.mq.handler;
+package corg.io.mq.handler;
 
-import corg.io.postgres.mq.model.config.DbConfig;
-import corg.io.postgres.mq.model.config.MessageHandlerConfig;
-import corg.io.postgres.mq.model.config.MessageQueueConfig;
-import corg.io.postgres.mq.model.message.Message;
-import corg.io.postgres.mq.model.message.MessageHandlerBatch;
-import corg.io.postgres.mq.table.MessageQueue;
-import corg.io.postgres.mq.table.TransactionManager;
+import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.MessageHandlerConfig;
+import corg.io.mq.model.config.MessageQueueConfig;
+import corg.io.mq.model.message.Message;
+import corg.io.mq.model.message.MessageHandlerBatch;
+import corg.io.mq.table.MessageQueue;
+import corg.io.mq.table.TransactionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

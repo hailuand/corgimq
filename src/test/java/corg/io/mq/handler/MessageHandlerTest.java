@@ -1,9 +1,9 @@
-package corg.io.postgres.mq.handler;
+package corg.io.mq.handler;
 
-import corg.io.postgres.mq.AbstractMessageQueueTest;
-import corg.io.postgres.mq.model.config.DbConfig;
-import corg.io.postgres.mq.model.config.MessageHandlerConfig;
-import corg.io.postgres.mq.model.config.MessageQueueConfig;
+import corg.io.mq.AbstractMessageQueueTest;
+import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.MessageQueueConfig;
+import corg.io.mq.model.config.MessageHandlerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

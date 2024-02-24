@@ -1,4 +1,4 @@
-package corg.io.postgres.mq;
+package corg.io.mq;
 
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
 import org.h2.api.ErrorCode;

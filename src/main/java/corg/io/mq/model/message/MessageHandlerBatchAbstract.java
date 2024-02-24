@@ -1,6 +1,9 @@
-package corg.io.postgres.mq.model.config;
+package corg.io.mq.model.message;
 
 import org.immutables.value.Value;
+
+import java.sql.Connection;
+import java.util.List;
 
 @Value.Immutable
 @Value.Style(
@@ -10,7 +13,10 @@ import org.immutables.value.Value;
         optionalAcceptNullable = true,
         strictBuilder = true
 )
-public interface MessageHandlerConfigAbstract {
+public interface MessageHandlerBatchAbstract {
     @Value.Parameter
-    int maxNumMessages();
+    List<Message> messages();
+
+    @Value.Parameter
+    Connection transactionConnection();
 }

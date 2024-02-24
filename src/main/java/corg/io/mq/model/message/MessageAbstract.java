@@ -1,4 +1,4 @@
-package corg.io.postgres.mq.model.message;
+package corg.io.mq.model.message;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

@@ -1,7 +1,7 @@
-package corg.io.postgres.mq.table.datasource;
+package corg.io.mq.table.datasource;
 
-import corg.io.postgres.mq.RelationalTestUtil;
-import corg.io.postgres.mq.table.MessageQueueTest;
+import corg.io.mq.RelationalTestUtil;
+import corg.io.mq.table.MessageQueueTest;
 import org.junit.jupiter.api.AfterEach;
 
 import java.sql.SQLException;

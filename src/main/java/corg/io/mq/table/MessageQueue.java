@@ -1,10 +1,10 @@
-package corg.io.postgres.mq.table;
+package corg.io.mq.table;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import corg.io.postgres.mq.model.config.DbConfig;
-import corg.io.postgres.mq.model.config.MessageQueueConfig;
-import corg.io.postgres.mq.model.message.Message;
+import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.MessageQueueConfig;
+import corg.io.mq.model.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;

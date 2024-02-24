@@ -1,9 +1,9 @@
-package corg.io.postgres.mq;
+package corg.io.mq;
 
-import corg.io.postgres.mq.model.config.DbConfig;
-import corg.io.postgres.mq.model.config.MessageQueueConfig;
-import corg.io.postgres.mq.model.message.Message;
-import corg.io.postgres.mq.table.MessageQueue;
+import corg.io.mq.model.config.DbConfig;
+import corg.io.mq.model.config.MessageQueueConfig;
+import corg.io.mq.model.message.Message;
+import corg.io.mq.table.MessageQueue;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.BeforeEach;
 

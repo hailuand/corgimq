@@ -1,9 +1,6 @@
-package corg.io.postgres.mq.model.message;
+package corg.io.mq.model.config;
 
 import org.immutables.value.Value;
-
-import java.sql.Connection;
-import java.util.List;
 
 @Value.Immutable
 @Value.Style(
@@ -13,10 +10,7 @@ import java.util.List;
         optionalAcceptNullable = true,
         strictBuilder = true
 )
-public interface MessageHandlerBatchAbstract {
+public interface MessageQueueConfigAbstract {
     @Value.Parameter
-    List<Message> messages();
-
-    @Value.Parameter
-    Connection transactionConnection();
+    String queueName();
 }

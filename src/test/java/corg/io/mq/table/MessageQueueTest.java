@@ -1,7 +1,8 @@
-package corg.io.postgres.mq.table;
+package corg.io.mq.table;
 
-import corg.io.postgres.mq.AbstractMessageQueueTest;
-import corg.io.postgres.mq.model.message.Message;
+import corg.io.mq.AbstractMessageQueueTest;
+import corg.io.mq.model.message.Message;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -46,13 +47,13 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
         try(var conn = messageQueue.getConnection()) {
             messageQueue.pop(messages, conn);
             var pendingPostPop = messageQueue.read(10, conn);
-            assertTrue(pendingPostPop.isEmpty());
+            Assertions.assertTrue(pendingPostPop.isEmpty());
         }
         // assert in separate txn
         try(var conn = messageQueue.getConnection(); var st = conn.createStatement()) {
             var rs = st.executeQuery("SELECT * from \"%s\".\"%s\" ORDER BY \"message_time\" ASC"
                     .formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName()));
-            assertTrue(rs.isBeforeFirst());
+            Assertions.assertTrue(rs.isBeforeFirst());
             List<Message> processed = new ArrayList<>();
             while(rs.next()) {
                 var id = rs.getString("id");
@@ -85,9 +86,9 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
 
     @Test
     public void testPushNothing() throws SQLException {
-        assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
+        Assertions.assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
         this.messageQueue.push(Collections.emptyList(), getConnection());
-        assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
+        Assertions.assertTrue(this.messageQueue.read(10, getConnection()).isEmpty());
     }
 
     @Test
@@ -167,10 +168,10 @@ public abstract class MessageQueueTest extends AbstractMessageQueueTest {
         try(var conn = messageQueue.getConnection(); var st = conn.createStatement()) {
             var rs = st.executeQuery("SELECT COUNT(*) from \"%s\".\"%s\"".formatted(messageQueue.tableSchemaName(),
                     messageQueue.queueTableName()));
-            assertTrue(rs.isBeforeFirst());
+            Assertions.assertTrue(rs.isBeforeFirst());
             if(rs.next()) {
                 var count = rs.getLong(1);
-                assertEquals(expectedRowCount, count, "Row count matches");
+                Assertions.assertEquals(expectedRowCount, count, "Row count matches");
             }
         }
     }

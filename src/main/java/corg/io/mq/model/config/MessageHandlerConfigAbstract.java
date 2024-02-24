@@ -1,4 +1,4 @@
-package corg.io.postgres.mq.model.config;
+package corg.io.mq.model.config;
 
 import org.immutables.value.Value;
 
@@ -10,7 +10,7 @@ import org.immutables.value.Value;
         optionalAcceptNullable = true,
         strictBuilder = true
 )
-public interface MessageQueueConfigAbstract {
+public interface MessageHandlerConfigAbstract {
     @Value.Parameter
-    String queueName();
+    int maxNumMessages();
 }
