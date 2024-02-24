@@ -6,6 +6,7 @@ import corg.io.mq.model.message.Message;
 import corg.io.mq.table.MessageQueue;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
 import java.sql.SQLException;
@@ -14,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @SuppressWarnings("SqlSourceToSinkFlow")
 public abstract class AbstractMessageQueueTest {
@@ -33,8 +35,14 @@ public abstract class AbstractMessageQueueTest {
 
     protected void configure(DataSource dataSource) throws SQLException {
         switch(dataSource) {
-            case POSTGRES -> this.jdbcContainer = RelationalTestUtil.postgresContainer();
-            case MYSQL -> this. jdbcContainer = RelationalTestUtil.mySQLContainer(SCHEMA_NAME);
+            case POSTGRES -> {
+                assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+                this.jdbcContainer = RelationalTestUtil.postgresContainer();
+            }
+            case MYSQL -> {
+                assumeTrue(DockerClientFactory.instance().isDockerAvailable());
+                this. jdbcContainer = RelationalTestUtil.mySQLContainer();
+            }
         }
         if(this.jdbcContainer != null && !jdbcContainer.isRunning()) {
             this.jdbcContainer.start();
@@ -104,6 +112,20 @@ public abstract class AbstractMessageQueueTest {
                 }
                 """.formatted(faker.onePiece().character(), faker.onePiece().akumasNoMi());
         return Message.of(data);
+    }
+
+    protected void createSecondaryTable(String secondaryTableName) throws SQLException {
+        try(var st = this.messageQueue.getConnection().createStatement()) {
+            var ddl = """
+                    CREATE TABLE IF NOT EXISTS "%s"."%s" (
+                    "id" INTEGER PRIMARY KEY,
+                    "some_data" TEXT NOT NULL
+                    );
+                    """.formatted(
+                    messageQueue.tableSchemaName(),
+                    secondaryTableName);
+            st.execute(ddl);
+        }
     }
 
     protected void assertMessages(List<Message> expected, List<Message> actual) {

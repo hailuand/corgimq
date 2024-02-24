@@ -170,18 +170,4 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 Collections.emptyList(), "failed txn changes not committed");
         tearDown(dataSource);
     }
-
-    private void createSecondaryTable(String secondaryTableName) throws SQLException {
-        try(var st = this.messageQueue.getConnection().createStatement()) {
-            var ddl = """
-                    CREATE TABLE IF NOT EXISTS "%s"."%s" (
-                    "id" INTEGER PRIMARY KEY,
-                    "variety" TEXT NOT NULL
-                    );
-                    """.formatted(
-                    messageQueue.tableSchemaName(),
-                    secondaryTableName);
-            st.execute(ddl);
-        }
-    }
 }

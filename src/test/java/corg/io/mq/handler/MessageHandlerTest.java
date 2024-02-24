@@ -3,7 +3,6 @@ package corg.io.mq.handler;
 import corg.io.mq.AbstractMessageQueueTest;
 import corg.io.mq.model.config.MessageHandlerConfig;
 import corg.io.mq.model.message.Message;
-import corg.io.mq.model.message.MessageHandlerBatch;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -13,8 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MessageHandlerTest extends AbstractMessageQueueTest {
     private static final int MAX_MESSAGES = 15;
@@ -58,14 +56,112 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
 
     @ParameterizedTest
     @EnumSource(DataSource.class)
-    public void testHandleInTransaction(DataSource dataSource) {
-        fail("n/i");
+    public void testHandleInTransaction(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        String secondaryTableName = "handler_results";
+        createSecondaryTable(secondaryTableName);
+        final var messages = List.of(createMessage(), createMessage(), createMessage());
+        try(var conn = this.messageQueue.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
+        var handled = new ArrayList<Message>();
+        var dml = """
+               INSERT INTO "%s"."%s" VALUES
+                (?, ?)
+                """.formatted(SCHEMA_NAME, secondaryTableName);
+        var secondaryDataMapping = new HashMap<Integer, String>();
+        this.messageHandler.listen(batch -> {
+            try(var conn = this.messageQueue.getConnection(); var st = conn.prepareStatement(dml)) {
+                int id = 0;
+                for(var msg : batch.messages()) {
+                    st.setInt(1, id);
+                    st.setString(2, msg.data());
+                    st.addBatch();
+                    handled.add(msg);
+                    secondaryDataMapping.put(id++, msg.data());
+                }
+                st.executeBatch();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return handled;
+        });
+        assertMessagesInTable(messages, true);
+        // assert results of other txn
+        try(var conn = this.messageQueue.getConnection(); var st = conn.createStatement()) {
+            var rs = st.executeQuery("SELECT * FROM \"%s\".\"%s\" ORDER BY \"id\" ASC"
+                    .formatted(SCHEMA_NAME, secondaryTableName));
+            assertTrue(rs.isBeforeFirst());
+
+            while(rs.next()) {
+                var id = rs.getInt("id");
+                var otherData = rs.getString("some_data");
+                assertEquals(secondaryDataMapping.get(id), otherData);
+            }
+        }
+        tearDown(dataSource);
     }
 
     @ParameterizedTest
     @EnumSource(DataSource.class)
-    public void testHandleInTransactionFailed(DataSource dataSource) {
-        fail("n/i");
+    public void testHandleInTransactionFailed(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        String secondaryTableName = "handler_results";
+        createSecondaryTable(secondaryTableName);
+        final var messages = List.of(createMessage(), createMessage(), createMessage());
+        try(var conn = this.messageQueue.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
+        var dml = """
+               INSERT INTO "%s"."%s" VALUES
+                (?, ?)
+                """.formatted(SCHEMA_NAME, secondaryTableName);
+        assertThrows(RuntimeException.class, () -> {
+            this.messageHandler.listen(batch -> {
+                var handled = new ArrayList<Message>();
+                try(var conn = this.messageQueue.getConnection(); var st = conn.prepareStatement(dml)) {
+                    int id = 0;
+                    for(var msg : batch.messages()) {
+                        st.setInt(1, id);
+                        st.setString(2, msg.data());
+                        st.addBatch();
+                        handled.add(msg);
+                    }
+                    st.executeBatch();
+                } catch (SQLException e) {
+                    assertUniquePrimaryKeyViolation(dataSource, e);
+                    throw new RuntimeException(e);
+                }
+                return handled;
+            });
+        });
+        assertMessagesInTable(messages, false); // no messages popped
+        tearDown(dataSource);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testHandleSqlExceptionSql(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        String secondaryTableName = "handler_results";
+        createSecondaryTable(secondaryTableName);
+        final var messages = List.of(createMessage(), createMessage(), createMessage());
+        try(var conn = this.messageQueue.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
+        assertThrows(RuntimeException.class, () -> {
+            this.messageHandler.listen(batch -> {
+                try(var conn = this.messageQueue.getConnection(); var st = conn.createStatement()) {
+                    var sql = "select * from foobar";
+                    st.execute(sql);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+        });
+        assertMessagesInTable(messages, false); // no messages popped
+        tearDown(dataSource);
     }
 
     private void assertMessagesInTable(List<Message> messages, boolean processed) throws SQLException {
@@ -73,6 +169,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             var processedClause = "";
             if(processed) {
                 processedClause = "AND \"processing_time\" IS NOT NULL";
+            }
+            else {
+                processedClause = "AND \"processing_time\" IS NULL";
             }
             var sql = """
                     SELECT * from "%s"."%s"

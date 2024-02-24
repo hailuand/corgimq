@@ -17,5 +17,5 @@ public interface MessageQueueConfigAbstract {
     @Value.Default
     default String schemaName() {
         return "cmq";
-    };
+    }
 }

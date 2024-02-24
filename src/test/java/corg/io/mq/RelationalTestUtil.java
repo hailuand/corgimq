@@ -17,8 +17,8 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import static org.junit.jupiter.api.Assertions.*;
 
 public final class RelationalTestUtil {
-    private static JdbcDatabaseContainer<?> postgres;
-    private static JdbcDatabaseContainer<?> mySql;
+    private static final JdbcDatabaseContainer<?> postgres;
+    private static final JdbcDatabaseContainer<?> mySql;
 
     static {
         postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres")
@@ -34,7 +34,7 @@ public final class RelationalTestUtil {
         return postgres;
     }
 
-    public static JdbcDatabaseContainer<?> mySQLContainer(String schemaName) {
+    public static JdbcDatabaseContainer<?> mySQLContainer() {
         return mySql;
     }
 
