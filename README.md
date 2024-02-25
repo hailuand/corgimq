@@ -1,5 +1,5 @@
 # CorgiMQ 
-[![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg)](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq)
+[![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg)](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ![mascot.jpg](mascot.jpg)
 
@@ -41,5 +41,6 @@ Complexity will find you! Until then, don't go looking for it 🐶
 ```
 
 ## References
+- https://adriano.fyi/posts/2023-09-24-choose-postgres-queue-technology/
 - https://dagster.io/blog/skip-kafka-use-postgres-message-queue
 - https://mcfunley.com/choose-boring-technology
