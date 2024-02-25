@@ -16,16 +16,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
+          distribution: 'temurin'
           java-version: '21'
           cache: maven
       - name: Build & test
         run: ./mvnw -e -B verify
-      - name: Publish test report
-        uses: mikepenz/action-junit-report@v4
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: '**/target/surefire-reports/TEST-*.xml'
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         env:

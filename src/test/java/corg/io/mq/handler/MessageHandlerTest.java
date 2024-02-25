@@ -38,6 +38,12 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             return handled;
         });
         assertMessagesInTable(messages, true);
+        handled.clear();
+        this.messageHandler.listen(batch -> {
+            handled.addAll(batch.messages());
+            return handled;
+        });
+        assertTrue(handled.isEmpty());
         tearDown(dataSource);
     }
 
