@@ -235,7 +235,7 @@
                         <palantirJavaFormat />
                         <removeUnusedImports />
                         <licenseHeader>
-                            <file>${project.basedir}/license-header</file>
+                            <file>${project.basedir}/header-template</file>
                         </licenseHeader>
                     </java>
                 </configuration>

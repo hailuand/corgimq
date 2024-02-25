@@ -1,4 +1,4 @@
-# CorgiMQ 
+# Corgi Message Queue (CorgiMQ) 
 [![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg)](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ![mascot.jpg](mascot.jpg)
@@ -10,7 +10,7 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 - Lightweight: bring **just your DBMS.** 🚀
 - Batteries included: sensible out-of-the-box defaults with a few optional knobs to get you dangerous _fast_. 🔋
 - Transactional: shared access of JDBC `Connection` available to provide transactional message handling. 🤝
-- Auditable: audit information in the queue retains if a message was read, by whom, and when. 🔎
+- Auditable: audit information in the queue captures if, when, and who read a message. 🔎
 - Guaranteed **exactly-once delivery** of a message to a reader - if someone's currently reading it, no one else receives it.
 - Messages remain in queue until removed.
 
