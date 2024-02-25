@@ -1,8 +1,7 @@
 package corg.io.mq.model.config;
 
-import org.immutables.value.Value;
-
 import java.util.concurrent.TimeUnit;
+import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Style(
@@ -10,8 +9,7 @@ import java.util.concurrent.TimeUnit;
         typeImmutable = "*",
         jdkOnly = true,
         optionalAcceptNullable = true,
-        strictBuilder = true
-)
+        strictBuilder = true)
 public interface DatabaseConfigAbstract {
     @Value.Parameter
     String jdbcUrl();

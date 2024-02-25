@@ -2,9 +2,8 @@ package corg.io.mq.model.message;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.immutables.value.Value;
-
 import java.util.UUID;
+import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Style(
@@ -12,8 +11,7 @@ import java.util.UUID;
         typeImmutable = "*",
         jdkOnly = true,
         optionalAcceptNullable = true,
-        strictBuilder = true
-)
+        strictBuilder = true)
 @JsonSerialize(as = Message.class)
 @JsonDeserialize(as = Message.class)
 public interface MessageAbstract {

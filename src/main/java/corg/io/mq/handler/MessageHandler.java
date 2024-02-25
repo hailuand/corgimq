@@ -5,13 +5,12 @@ import corg.io.mq.model.message.Message;
 import corg.io.mq.model.message.MessageHandlerBatch;
 import corg.io.mq.table.MessageQueue;
 import corg.io.mq.table.TransactionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MessageHandler {
     private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
@@ -31,25 +30,27 @@ public class MessageHandler {
     }
 
     public void listen(Function<MessageHandlerBatch, List<Message>> handler) throws SQLException {
-        this.transactionManager.executeInTransaction(() -> {
-            try {
-                return this.messageQueue.getConnection();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }, transactionConnection -> {
-            try {
-                var messages = this.messageQueue.read(this.messageHandlerConfig.maxNumMessages(), transactionConnection);
-                if(!messages.isEmpty()) {
-                    var handled = handler.apply(MessageHandlerBatch.of(messages, transactionConnection));
-                    this.messageQueue.pop(handled, transactionConnection);
-                }
-                else {
-                    logger.debug("No messages returned to handle");
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        this.transactionManager.executeInTransaction(
+                () -> {
+                    try {
+                        return this.messageQueue.getConnection();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                transactionConnection -> {
+                    try {
+                        var messages = this.messageQueue.read(
+                                this.messageHandlerConfig.maxNumMessages(), transactionConnection);
+                        if (!messages.isEmpty()) {
+                            var handled = handler.apply(MessageHandlerBatch.of(messages, transactionConnection));
+                            this.messageQueue.pop(handled, transactionConnection);
+                        } else {
+                            logger.debug("No messages returned to handle");
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 }

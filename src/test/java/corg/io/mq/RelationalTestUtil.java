@@ -1,6 +1,11 @@
 package corg.io.mq;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.mysql.cj.exceptions.MysqlErrorNumbers;
+import java.sql.BatchUpdateException;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import org.h2.api.ErrorCode;
 import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.postgresql.util.PSQLException;
@@ -10,21 +15,13 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.sql.BatchUpdateException;
-import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 public final class RelationalTestUtil {
     private static final JdbcDatabaseContainer<?> postgres;
     private static final JdbcDatabaseContainer<?> mySql;
 
     static {
-        postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres")
-                .withTag("16.2"));
-        mySql = new MySQLContainer<>(DockerImageName.parse("mysql")
-                .withTag("8.3.0"))
+        postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres").withTag("16.2"));
+        mySql = new MySQLContainer<>(DockerImageName.parse("mysql").withTag("8.3.0"))
                 .withUsername("root")
                 .withPassword("")
                 .withEnv("MYSQL_ROOT_HOST", "%");

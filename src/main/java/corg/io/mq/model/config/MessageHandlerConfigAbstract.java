@@ -8,8 +8,7 @@ import org.immutables.value.Value;
         typeImmutable = "*",
         jdkOnly = true,
         optionalAcceptNullable = true,
-        strictBuilder = true
-)
+        strictBuilder = true)
 public interface MessageHandlerConfigAbstract {
     @Value.Parameter
     @Value.Default

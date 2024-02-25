@@ -20,7 +20,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Build & test
-        run: ./mvnw -e -B verify --file pom.xml
+        run: ./mvnw -e -B verify
       - name: Publish test report
         uses: mikepenz/action-junit-report@v4
         if: success() || failure() # always run even if the previous step fails

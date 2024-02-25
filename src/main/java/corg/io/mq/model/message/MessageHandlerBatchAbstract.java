@@ -1,9 +1,8 @@
 package corg.io.mq.model.message;
 
-import org.immutables.value.Value;
-
 import java.sql.Connection;
 import java.util.List;
+import org.immutables.value.Value;
 
 @Value.Immutable
 @Value.Style(
@@ -11,8 +10,7 @@ import java.util.List;
         typeImmutable = "*",
         jdkOnly = true,
         optionalAcceptNullable = true,
-        strictBuilder = true
-)
+        strictBuilder = true)
 public interface MessageHandlerBatchAbstract {
     @Value.Parameter
     List<Message> messages();

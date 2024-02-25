@@ -40,6 +40,8 @@
         <testcontainers.version>1.19.6</testcontainers.version>
         <!-- hikari cp -->
         <hikaricp.version>5.1.0</hikaricp.version>
+        <!-- spotless -->
+        <spotless.version>2.43.0</spotless.version>
     </properties>
 
     <dependencies>
@@ -220,6 +222,25 @@
                                 <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <ratchetFrom>origin/main</ratchetFrom>
+                    <java>
+                        <palantirJavaFormat />
+                        <removeUnusedImports />
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

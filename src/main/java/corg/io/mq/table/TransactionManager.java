@@ -7,13 +7,12 @@ import java.util.function.Supplier;
 
 public class TransactionManager {
     public void executeInTransaction(Supplier<Connection> supplier, Consumer<Connection> consumer) throws SQLException {
-        try(var conn = supplier.get()) {
+        try (var conn = supplier.get()) {
             conn.setAutoCommit(false);
             try {
                 consumer.accept(conn);
                 conn.commit();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 conn.rollback();
                 throw new RuntimeException(e);
             }
