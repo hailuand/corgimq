@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -191,6 +193,57 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     return null;
                 }));
         assertMessagesInTable(messages, false); // no messages popped
+        tearDown(dataSource);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testMessageBatchSize(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        var msgs = createMessages(10);
+        int batchSize = 4;
+        this.messageQueue.push(msgs);
+        var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(batchSize));
+        var msgsMap = msgs.stream().collect(Collectors.toMap(Message::id, Function.identity()));
+        var processed = new ArrayList<Message>();
+        for (int i = 0; i < Math.ceilDiv(msgs.size(), batchSize); i++) {
+            int expectedSize = Math.min(msgs.size() - (batchSize * i), batchSize);
+            handler.listen(batch -> {
+                var batched = batch.messages();
+                assertEquals(expectedSize, batched.size());
+                var expected = new ArrayList<Message>();
+                for (var msg : batched) {
+                    assertTrue(msgsMap.containsKey(msg.id()));
+                    expected.add(msgsMap.get(msg.id()));
+                    msgsMap.remove(msg.id());
+                }
+                assertMessages(expected, batched);
+                processed.addAll(batched);
+                return batched;
+            });
+            assertMessagesInTable(processed, true);
+        }
+        assertTrue(msgsMap.isEmpty());
+        tearDown(dataSource);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testSubsetOfMessagesHandled(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        var msgs = createMessages(10);
+        var processing = new ArrayList<Message>();
+        processing.add(msgs.get(0));
+        processing.add(msgs.get(1));
+        this.messageQueue.push(msgs);
+        this.messageHandler.listen(batch -> {
+            assertTrue(processing.size() < batch.messages().size());
+            assertTrue(batch.messages().containsAll(processing));
+            return processing;
+        });
+        assertMessagesInTable(processing, true);
+        msgs.removeAll(processing);
+        assertMessagesInTable(msgs, false);
         tearDown(dataSource);
     }
 

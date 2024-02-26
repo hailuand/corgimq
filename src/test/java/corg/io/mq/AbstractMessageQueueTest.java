@@ -27,6 +27,7 @@ import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
 import corg.io.mq.table.MessageQueue;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -125,6 +126,14 @@ public abstract class AbstractMessageQueueTest {
                 Assertions.assertEquals(expectedRowCount, count, "Row count matches");
             }
         }
+    }
+
+    protected List<Message> createMessages(int num) {
+        List<Message> messages = new ArrayList<>();
+        for (int i = 0; i < num; i++) {
+            messages.add(createMessage());
+        }
+        return messages;
     }
 
     protected Message createMessage() {

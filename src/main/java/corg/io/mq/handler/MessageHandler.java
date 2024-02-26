@@ -60,7 +60,7 @@ public class MessageHandler {
                 transactionConnection -> {
                     try {
                         var messages = this.messageQueue.read(
-                                this.messageHandlerConfig.maxNumMessages(), transactionConnection);
+                                this.messageHandlerConfig.messageBatchSize(), transactionConnection);
                         if (!messages.isEmpty()) {
                             var handled = handler.apply(MessageHandlerBatch.of(messages, transactionConnection));
                             this.messageQueue.pop(handled, transactionConnection);

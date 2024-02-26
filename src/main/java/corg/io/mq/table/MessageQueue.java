@@ -61,6 +61,10 @@ public class MessageQueue implements Closeable, AutoCloseable {
         this.createTableWithSchema();
     }
 
+    public void push(List<Message> messages) throws SQLException {
+        this.push(messages, this.getConnection());
+    }
+
     public void push(List<Message> messages, Connection conn) throws SQLException {
         configureMDC();
         if (messages.isEmpty()) {
