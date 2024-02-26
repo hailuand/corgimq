@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+@SuppressWarnings("SqlDialectInspection")
 public class MessageHandlerTest extends AbstractMessageQueueTest {
     private static final int MAX_MESSAGES = 15;
     private MessageHandler messageHandler;
@@ -252,7 +253,12 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 var st = conn.createStatement()) {
             var processedClause = "";
             if (processed) {
-                processedClause = "AND \"processing_time\" IS NOT NULL";
+                processedClause =
+                        """
+                        AND "processing_time" IS NOT NULL
+                        AND "read_count" > 0
+                        AND "read_by" IS NOT NULL
+                        """;
             } else {
                 processedClause = "AND \"processing_time\" IS NULL";
             }

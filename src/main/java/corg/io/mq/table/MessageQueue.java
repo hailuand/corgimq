@@ -36,6 +36,7 @@ import org.slf4j.MDC;
 
 public class MessageQueue implements Closeable, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
+    private static final String POOL_NAME = "CorgiMQPool";
 
     private final MessageQueueConfig messageQueueConfig;
     private final HikariDataSource hikariDataSource;
@@ -53,7 +54,7 @@ public class MessageQueue implements Closeable, AutoCloseable {
         hikariConfig.setPassword(dbConfig.password());
         hikariConfig.setMaximumPoolSize(dbConfig.maxConnectionPoolSize());
         hikariConfig.setMaxLifetime(dbConfig.connectionMaxLifetime());
-        hikariConfig.setPoolName("CorgiMQPool");
+        hikariConfig.setPoolName(POOL_NAME);
         this.hikariDataSource = new HikariDataSource(hikariConfig);
     }
 
@@ -112,6 +113,10 @@ public class MessageQueue implements Closeable, AutoCloseable {
         MDC.clear();
     }
 
+    public List<Message> read(int numMessages) throws SQLException {
+        return this.read(numMessages, getConnection());
+    }
+
     public List<Message> read(int numMessages, Connection conn) throws SQLException {
         configureMDC();
         var sql =
@@ -134,6 +139,7 @@ public class MessageQueue implements Closeable, AutoCloseable {
                 pending.add(Message.builder().id(id).data(data).build());
             }
         }
+        markMessagesRead(pending, conn);
         logger.info("{} messages received", pending.size());
         MDC.clear();
         return pending;
@@ -163,6 +169,8 @@ public class MessageQueue implements Closeable, AutoCloseable {
                     "id" VARCHAR(36) PRIMARY KEY,
                     "data" TEXT NOT NULL,
                     "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    "read_count" INTEGER DEFAULT 0 NOT NULL,
+                    "read_by" VARCHAR(16),
                     "processing_time" TIMESTAMP
                 );
                 """
@@ -175,6 +183,24 @@ public class MessageQueue implements Closeable, AutoCloseable {
             statement.execute(createTableddl);
         }
         MDC.clear();
+    }
+
+    private void markMessagesRead(List<Message> messages, Connection conn) throws SQLException {
+        var dml =
+                """
+                UPDATE "%s"."%s"
+                SET "read_count" = "read_count" + 1, "read_by" = CURRENT_USER
+                WHERE "id" = ?
+                """
+                        .formatted(this.tableSchemaName(), this.queueTableName());
+        logger.debug(dml);
+        try (var statement = conn.prepareStatement(dml)) {
+            for (var message : messages) {
+                statement.setString(1, message.id());
+                statement.addBatch();
+            }
+            statement.executeBatch();
+        }
     }
 
     private void configureMDC() {

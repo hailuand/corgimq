@@ -28,6 +28,7 @@ public class TransactionManager {
     public void executeInTransaction(Supplier<Connection> supplier, Consumer<Connection> consumer) throws SQLException {
         try (var conn = supplier.get()) {
             conn.setAutoCommit(false);
+            conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             try {
                 consumer.accept(conn);
                 conn.commit();

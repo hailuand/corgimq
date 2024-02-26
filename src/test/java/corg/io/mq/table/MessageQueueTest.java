@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-@SuppressWarnings("SqlSourceToSinkFlow")
 public class MessageQueueTest extends AbstractMessageQueueTest {
     @ParameterizedTest
     @EnumSource(DataSource.class)
@@ -201,5 +200,50 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 Collections.emptyList(),
                 "failed txn changes not committed");
         tearDown(dataSource);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testReadAuditMetadataUpdated(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        var messages = createMessages(5);
+        this.messageQueue.push(messages);
+        var result = this.messageQueue.read(10);
+        assertMessages(messages, result);
+        int expectedReadCount = 1;
+        assertAuditMetadata(messages, expectedReadCount);
+        this.messageQueue.read(10);
+        assertAuditMetadata(messages, expectedReadCount + 1);
+        tearDown(dataSource);
+    }
+
+    private void assertAuditMetadata(List<Message> expectedMessages, int expectedRowCount) throws SQLException {
+        try (var conn = this.messageQueue.getConnection();
+                var st = conn.createStatement()) {
+            var userRs = st.executeQuery("SELECT CURRENT_USER");
+            userRs.next();
+            var expectedUser = userRs.getString("CURRENT_USER");
+            var sql =
+                    """
+                    SELECT * FROM "%s"."%s"
+                    WHERE "read_count" > 0
+                    AND "read_by" IS NOT NULL
+                    """
+                            .formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
+            var rs = st.executeQuery(sql);
+            assertTrue(rs.isBeforeFirst());
+            var actual = new ArrayList<Message>();
+            while (rs.next()) {
+                var readCount = rs.getInt("read_count");
+                var readUser = rs.getString("read_by");
+                assertEquals(expectedRowCount, readCount);
+                assertEquals(expectedUser.toUpperCase(), readUser.toUpperCase());
+                actual.add(Message.builder()
+                        .id(rs.getString("id"))
+                        .data(rs.getString("data"))
+                        .build());
+            }
+            assertMessages(expectedMessages, actual);
+        }
     }
 }
