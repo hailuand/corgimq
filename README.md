@@ -103,7 +103,7 @@ messageHandler.listen(messageBatch -> {
 
 The above snippet's execution results in the following:
 ```
-postgres=# select * from fruits.acquired_q order by message_time asc;
+postgres=# select * from fruits.acquired_q;
                   id                  |      data       |        message_time        | read_count | read_by  |      processing_time
 --------------------------------------+-----------------+----------------------------+------------+----------+----------------------------
  a174f9d1-d3a9-4583-9396-d3ed575a4ebf | Mero Mero no Mi | 2024-02-27 10:12:57.486346 |          0 |          |
