@@ -48,12 +48,10 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         configure(dataSource);
         assertTableRowCount(0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        try (var conn = this.messageQueue.getConnection()) {
-            messageQueue.push(messages, conn);
-            assertTableRowCount(messages.size());
-            var pending = messageQueue.read(10, conn);
-            assertMessages(messages, pending);
-        }
+        messageQueue.push(messages);
+        assertTableRowCount(messages.size());
+        var pending = messageQueue.read(10);
+        assertMessages(messages, pending);
         tearDown(dataSource);
     }
 
@@ -62,18 +60,15 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testPopAndRead(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        try (var conn = messageQueue.getConnection()) {
-            messageQueue.push(messages, conn);
-            assertTableRowCount(messages.size());
-            var pending = messageQueue.read(10, conn);
-            assertMessages(messages, pending);
-        }
+        messageQueue.push(messages);
+        assertTableRowCount(messages.size());
+        var pending = messageQueue.read(10);
+        assertMessages(messages, pending);
         // Pop in another txn
-        try (var conn = messageQueue.getConnection()) {
-            messageQueue.pop(messages, conn);
-            var pendingPostPop = messageQueue.read(10, conn);
-            Assertions.assertTrue(pendingPostPop.isEmpty());
-        }
+        messageQueue.pop(messages);
+        var pendingPostPop = messageQueue.read(10);
+        Assertions.assertTrue(pendingPostPop.isEmpty());
+
         // assert in separate txn
         try (var conn = messageQueue.getConnection();
                 var st = conn.createStatement()) {
@@ -101,10 +96,10 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testWriteDupes(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage());
-        this.messageQueue.push(messages, this.messageQueue.getConnection());
+        this.messageQueue.push(messages);
         assertThrows(SQLException.class, () -> {
             try {
-                this.messageQueue.push(messages, this.messageQueue.getConnection());
+                this.messageQueue.push(messages);
             } catch (SQLException e) {
                 assertUniquePrimaryKeyViolation(dataSource, e);
                 throw e;
@@ -117,11 +112,9 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testPushNothing(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        Assertions.assertTrue(
-                this.messageQueue.read(10, this.messageQueue.getConnection()).isEmpty());
-        this.messageQueue.push(Collections.emptyList(), this.messageQueue.getConnection());
-        Assertions.assertTrue(
-                this.messageQueue.read(10, this.messageQueue.getConnection()).isEmpty());
+        Assertions.assertTrue(this.messageQueue.read(10).isEmpty());
+        this.messageQueue.push(Collections.emptyList());
+        Assertions.assertTrue(this.messageQueue.read(10).isEmpty());
         tearDown(dataSource);
     }
 
@@ -157,7 +150,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 throw new RuntimeException(e);
                             }
                         });
-        assertMessages(this.messageQueue.read(10, messageQueue.getConnection()), messages);
+        assertMessages(this.messageQueue.read(10), messages);
         tearDown(dataSource);
     }
 
@@ -195,10 +188,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 throw new RuntimeException(e);
                             }
                         }));
-        assertMessages(
-                this.messageQueue.read(10, messageQueue.getConnection()),
-                Collections.emptyList(),
-                "failed txn changes not committed");
+        assertMessages(this.messageQueue.read(10), Collections.emptyList(), "failed txn changes not committed");
         tearDown(dataSource);
     }
 

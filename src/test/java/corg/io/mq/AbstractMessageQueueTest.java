@@ -70,7 +70,7 @@ public abstract class AbstractMessageQueueTest {
                 this.getJdbcUrl(dataSource), this.getUserName(dataSource), this.getPassword(dataSource));
         this.mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageQueue = MessageQueue.of(this.dbConfig, this.mqConfig);
-        this.messageQueue.initSources();
+        this.messageQueue.initialize();
     }
 
     protected void tearDown(DataSource dataSource) throws SQLException {
@@ -82,7 +82,6 @@ public abstract class AbstractMessageQueueTest {
                 case MYSQL -> st.execute("DROP SCHEMA %s".formatted(SCHEMA_NAME));
             }
         }
-        this.messageQueue.close();
     }
 
     protected String getUserName(DataSource dataSource) {
@@ -150,7 +149,8 @@ public abstract class AbstractMessageQueueTest {
     }
 
     protected void createSecondaryTable(String secondaryTableName) throws SQLException {
-        try (var st = this.messageQueue.getConnection().createStatement()) {
+        try (var conn = this.messageQueue.getConnection();
+                var st = conn.createStatement()) {
             var ddl =
                     """
                     CREATE TABLE IF NOT EXISTS "%s"."%s" (

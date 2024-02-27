@@ -38,6 +38,10 @@ public class MessageHandler {
     private final MessageHandlerConfig messageHandlerConfig;
     private final TransactionManager transactionManager;
 
+    public static MessageHandler of(MessageQueue messageQueue) {
+        return of(messageQueue, MessageHandlerConfig.builder().build());
+    }
+
     public static MessageHandler of(MessageQueue messageQueue, MessageHandlerConfig messageHandlerConfig) {
         return new MessageHandler(messageQueue, messageHandlerConfig);
     }

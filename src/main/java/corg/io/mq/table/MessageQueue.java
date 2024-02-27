@@ -24,19 +24,21 @@ import com.zaxxer.hikari.HikariDataSource;
 import corg.io.mq.model.config.DatabaseConfig;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
-import java.io.Closeable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-public class MessageQueue implements Closeable, AutoCloseable {
+public class MessageQueue {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
-    private static final String POOL_NAME = "CorgiMQPool";
+
+    private static final Map<String, HikariDataSource> dataSources = new ConcurrentHashMap<>();
 
     private final MessageQueueConfig messageQueueConfig;
     private final HikariDataSource hikariDataSource;
@@ -48,22 +50,26 @@ public class MessageQueue implements Closeable, AutoCloseable {
     private MessageQueue(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         Objects.requireNonNull(dbConfig);
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(dbConfig.jdbcUrl());
-        hikariConfig.setUsername(dbConfig.username());
-        hikariConfig.setPassword(dbConfig.password());
-        hikariConfig.setMaximumPoolSize(dbConfig.maxConnectionPoolSize());
-        hikariConfig.setMaxLifetime(dbConfig.connectionMaxLifetime());
-        hikariConfig.setPoolName(POOL_NAME);
-        this.hikariDataSource = new HikariDataSource(hikariConfig);
+        var configKey = "%s:%s:%s".formatted(dbConfig.jdbcUrl(), dbConfig.username(), dbConfig.password());
+        this.hikariDataSource = dataSources.computeIfAbsent(configKey, ck -> {
+            HikariConfig hikariConfig = new HikariConfig();
+            hikariConfig.setJdbcUrl(dbConfig.jdbcUrl());
+            hikariConfig.setUsername(dbConfig.username());
+            hikariConfig.setPassword(dbConfig.password());
+            hikariConfig.setMaximumPoolSize(dbConfig.maxConnectionPoolSize());
+            hikariConfig.setMaxLifetime(dbConfig.connectionMaxLifetime());
+            return new HikariDataSource(hikariConfig);
+        });
     }
 
-    public void initSources() throws SQLException {
+    public void initialize() throws SQLException {
         this.createTableWithSchema();
     }
 
     public void push(List<Message> messages) throws SQLException {
-        this.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.push(messages, conn);
+        }
     }
 
     public void push(List<Message> messages, Connection conn) throws SQLException {
@@ -92,6 +98,12 @@ public class MessageQueue implements Closeable, AutoCloseable {
         MDC.clear();
     }
 
+    public void pop(List<Message> messages) throws SQLException {
+        try (var conn = this.getConnection()) {
+            this.pop(messages, conn);
+        }
+    }
+
     public void pop(List<Message> messages, Connection conn) throws SQLException {
         configureMDC();
         var dml =
@@ -114,7 +126,9 @@ public class MessageQueue implements Closeable, AutoCloseable {
     }
 
     public List<Message> read(int numMessages) throws SQLException {
-        return this.read(numMessages, getConnection());
+        try (var conn = getConnection()) {
+            return this.read(numMessages, conn);
+        }
     }
 
     public List<Message> read(int numMessages, Connection conn) throws SQLException {
@@ -205,10 +219,5 @@ public class MessageQueue implements Closeable, AutoCloseable {
 
     private void configureMDC() {
         MDC.put("queue", " - %s".formatted(this.messageQueueConfig.queueName()));
-    }
-
-    @Override
-    public void close() {
-        this.hikariDataSource.close();
     }
 }
