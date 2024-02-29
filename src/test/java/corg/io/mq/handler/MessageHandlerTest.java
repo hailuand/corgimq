@@ -240,8 +240,8 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var messages = createMessages(10);
         var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(3));
         this.messageQueue.push(messages);
-        var threadMessages1 = new HashSet<>();
-        var threadMessages2 = new HashSet<>();
+        var threadMessages1 = new HashSet<Message>();
+        var threadMessages2 = new HashSet<Message>();
         Thread t1 = new Thread(() -> {
             try {
                 handler.listen(batch -> {
@@ -273,6 +273,12 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         for (var message : threadMessages1) {
             assertFalse(threadMessages2.contains(message));
         }
+        assertMessagesInTable(new ArrayList<>(threadMessages1), true);
+        assertMessagesInTable(new ArrayList<>(threadMessages2), true);
+        var unprocessedMessages = messages.stream()
+                .filter(m -> !threadMessages1.contains(m) && !threadMessages2.contains(m))
+                .toList();
+        assertMessagesInTable(unprocessedMessages, false);
         tearDown(dataSource);
     }
 
