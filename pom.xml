@@ -86,6 +86,7 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>${hikaricp.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- LOGGING -->

@@ -19,18 +19,13 @@
 
 package corg.io.mq.table;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import corg.io.mq.model.config.DatabaseConfig;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -38,48 +33,18 @@ import org.slf4j.MDC;
 public class MessageQueue {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
 
-    private static final Map<String, HikariDataSource> dataSources = new ConcurrentHashMap<>();
-
     private final MessageQueueConfig messageQueueConfig;
-    private final HikariDataSource hikariDataSource;
 
-    public static MessageQueue of(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig) {
-        return new MessageQueue(dbConfig, messageQueueConfig);
+    public static MessageQueue of(MessageQueueConfig messageQueueConfig) {
+        return new MessageQueue(messageQueueConfig);
     }
 
-    private MessageQueue(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig) {
-        Objects.requireNonNull(dbConfig);
+    private MessageQueue(MessageQueueConfig messageQueueConfig) {
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
-        var providedPassword = dbConfig.passwordProvider().get();
-        var configKey = "%s:%s:%s:%s"
-                .formatted(
-                        dbConfig.jdbcUrl(),
-                        dbConfig.username(),
-                        providedPassword,
-                        dbConfig.additionalDataSourceProperties().hashCode());
-        this.hikariDataSource = dataSources.computeIfAbsent(configKey, ck -> {
-            HikariConfig hikariConfig = new HikariConfig();
-            hikariConfig.setJdbcUrl(dbConfig.jdbcUrl());
-            hikariConfig.setUsername(dbConfig.username());
-            hikariConfig.setPassword(providedPassword);
-            hikariConfig.setMaximumPoolSize(dbConfig.maxConnectionPoolSize());
-            hikariConfig.setMaxLifetime(dbConfig.connectionMaxLifetime());
-            for (Map.Entry<String, String> prop :
-                    dbConfig.additionalDataSourceProperties().entrySet()) {
-                hikariConfig.addDataSourceProperty(prop.getKey(), prop.getValue());
-            }
-            return new HikariDataSource(hikariConfig);
-        });
     }
 
-    public void initialize() throws SQLException {
-        this.createTableWithSchema();
-    }
-
-    public void push(List<Message> messages) throws SQLException {
-        try (var conn = this.getConnection()) {
-            this.push(messages, conn);
-        }
+    public void initialize(Connection conn) throws SQLException {
+        this.createTableWithSchema(conn);
     }
 
     public void push(List<Message> messages, Connection conn) throws SQLException {
@@ -108,12 +73,6 @@ public class MessageQueue {
         MDC.clear();
     }
 
-    public void pop(List<Message> messages) throws SQLException {
-        try (var conn = this.getConnection()) {
-            this.pop(messages, conn);
-        }
-    }
-
     public void pop(List<Message> messages, Connection conn) throws SQLException {
         configureMDC();
         var dml =
@@ -133,12 +92,6 @@ public class MessageQueue {
             statement.executeBatch();
         }
         MDC.clear();
-    }
-
-    public List<Message> read(int numMessages) throws SQLException {
-        try (var conn = getConnection()) {
-            return this.read(numMessages, conn);
-        }
     }
 
     public List<Message> read(int numMessages, Connection conn) throws SQLException {
@@ -169,10 +122,6 @@ public class MessageQueue {
         return pending;
     }
 
-    public Connection getConnection() throws SQLException {
-        return this.hikariDataSource.getConnection();
-    }
-
     public String tableSchemaName() {
         return this.messageQueueConfig.schemaName();
     }
@@ -181,7 +130,7 @@ public class MessageQueue {
         return "%s_q".formatted(this.messageQueueConfig.queueName());
     }
 
-    private void createTableWithSchema() throws SQLException {
+    private void createTableWithSchema(Connection conn) throws SQLException {
         configureMDC();
         var createSchemaDdl = """
                 CREATE SCHEMA IF NOT EXISTS "%s";
@@ -199,8 +148,7 @@ public class MessageQueue {
                 );
                 """
                         .formatted(this.tableSchemaName(), this.queueTableName());
-        try (var conn = getConnection();
-                var statement = conn.createStatement()) {
+        try (var statement = conn.createStatement()) {
             logger.debug(createSchemaDdl);
             statement.execute(createSchemaDdl);
             logger.debug(createTableddl);

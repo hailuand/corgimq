@@ -22,10 +22,12 @@ package corg.io.mq;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import corg.io.mq.model.config.DatabaseConfig;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import corg.io.mq.model.config.MessageQueueConfig;
 import corg.io.mq.model.message.Message;
 import corg.io.mq.table.MessageQueue;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,10 +49,10 @@ public abstract class AbstractMessageQueueTest {
     private static final String H2_PASSWORD = "";
 
     private JdbcDatabaseContainer<?> jdbcContainer;
-
-    protected DatabaseConfig dbConfig;
     protected MessageQueueConfig mqConfig;
     protected MessageQueue messageQueue;
+
+    private HikariDataSource hikariDataSource;
 
     protected void configure(DataSource dataSource) throws SQLException {
         switch (dataSource) {
@@ -66,15 +68,23 @@ public abstract class AbstractMessageQueueTest {
         if (this.jdbcContainer != null && !jdbcContainer.isRunning()) {
             this.jdbcContainer.start();
         }
-        this.dbConfig = DatabaseConfig.of(
-                this.getJdbcUrl(dataSource), this.getUserName(dataSource), () -> this.providePassword(dataSource));
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
+        hikariConfig.setUsername(this.getUserName(dataSource));
+        hikariConfig.setPassword(this.getPassword(dataSource));
+        hikariConfig.setPoolName("CorgiMQ Test Pool");
+        this.hikariDataSource = new HikariDataSource(hikariConfig);
         this.mqConfig = MessageQueueConfig.of(QUEUE_NAME);
-        this.messageQueue = MessageQueue.of(this.dbConfig, this.mqConfig);
-        this.messageQueue.initialize();
+        this.messageQueue = MessageQueue.of(this.mqConfig);
+        this.messageQueue.initialize(getConnection());
+    }
+
+    protected Connection getConnection() throws SQLException {
+        return hikariDataSource.getConnection();
     }
 
     protected void tearDown(DataSource dataSource) throws SQLException {
-        try (var conn = this.messageQueue.getConnection();
+        try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             switch (dataSource) {
                 case H2 -> st.execute("DROP ALL OBJECTS");
@@ -82,6 +92,7 @@ public abstract class AbstractMessageQueueTest {
                 case MYSQL -> st.execute("DROP SCHEMA %s".formatted(SCHEMA_NAME));
             }
         }
+        this.hikariDataSource.close();
     }
 
     protected String getUserName(DataSource dataSource) {
@@ -91,7 +102,7 @@ public abstract class AbstractMessageQueueTest {
         };
     }
 
-    protected String providePassword(DataSource dataSource) {
+    protected String getPassword(DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_PASSWORD;
             case MYSQL, POSTGRES -> this.jdbcContainer.getPassword();
@@ -115,7 +126,7 @@ public abstract class AbstractMessageQueueTest {
     }
 
     protected void assertTableRowCount(int expectedRowCount) throws SQLException {
-        try (var conn = messageQueue.getConnection();
+        try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             var rs = st.executeQuery("SELECT COUNT(*) from \"%s\".\"%s\""
                     .formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName()));
@@ -149,7 +160,7 @@ public abstract class AbstractMessageQueueTest {
     }
 
     protected void createSecondaryTable(String secondaryTableName) throws SQLException {
-        try (var conn = this.messageQueue.getConnection();
+        try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             var ddl =
                     """

@@ -48,19 +48,35 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         configure(dataSource);
         var defaultHandler = MessageHandler.of(this.messageQueue);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages);
+        this.messageQueue.push(messages, this.getConnection());
         var handled = new ArrayList<Message>();
         assertMessagesInTable(messages, false);
-        defaultHandler.listen(batch -> {
-            handled.addAll(batch.messages());
-            return handled;
-        });
+        defaultHandler.listen(
+                () -> {
+                    try {
+                        return this.getConnection();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                batch -> {
+                    handled.addAll(batch.messages());
+                    return handled;
+                });
         assertMessagesInTable(messages, true);
         handled.clear();
-        defaultHandler.listen(batch -> {
-            handled.addAll(batch.messages());
-            return handled;
-        });
+        defaultHandler.listen(
+                () -> {
+                    try {
+                        return this.getConnection();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                batch -> {
+                    handled.addAll(batch.messages());
+                    return handled;
+                });
         assertTrue(handled.isEmpty());
         tearDown(dataSource);
     }
@@ -70,7 +86,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     public void testHandleNoMessages(DataSource dataSource) throws SQLException {
         configure(dataSource);
         assertTableRowCount(0);
-        this.messageQueue.push(Collections.emptyList());
+        this.messageQueue.push(Collections.emptyList(), this.getConnection());
         assertTableRowCount(0);
         tearDown(dataSource);
     }
@@ -82,7 +98,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages);
+        this.messageQueue.push(messages, getConnection());
         var handled = new ArrayList<Message>();
         var dml = """
                INSERT INTO "%s"."%s" VALUES
@@ -90,25 +106,33 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 """
                 .formatted(SCHEMA_NAME, secondaryTableName);
         var secondaryDataMapping = new HashMap<Integer, String>();
-        this.messageHandler.listen(batch -> {
-            try (var st = batch.transactionConnection().prepareStatement(dml)) {
-                int id = 0;
-                for (var msg : batch.messages()) {
-                    st.setInt(1, id);
-                    st.setString(2, msg.data());
-                    st.addBatch();
-                    handled.add(msg);
-                    secondaryDataMapping.put(id++, msg.data());
-                }
-                st.executeBatch();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-            return handled;
-        });
+        this.messageHandler.listen(
+                () -> {
+                    try {
+                        return this.getConnection();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                batch -> {
+                    try (var st = batch.transactionConnection().prepareStatement(dml)) {
+                        int id = 0;
+                        for (var msg : batch.messages()) {
+                            st.setInt(1, id);
+                            st.setString(2, msg.data());
+                            st.addBatch();
+                            handled.add(msg);
+                            secondaryDataMapping.put(id++, msg.data());
+                        }
+                        st.executeBatch();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return handled;
+                });
         assertMessagesInTable(messages, true);
         // assert results of other txn
-        try (var conn = this.messageQueue.getConnection();
+        try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             var rs = st.executeQuery(
                     "SELECT * FROM \"%s\".\"%s\" ORDER BY \"id\" ASC".formatted(SCHEMA_NAME, secondaryTableName));
@@ -130,7 +154,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages);
+        this.messageQueue.push(messages, this.getConnection());
         var dml = """
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
@@ -138,23 +162,31 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 .formatted(SCHEMA_NAME, secondaryTableName);
         assertThrows(
                 RuntimeException.class,
-                () -> this.messageHandler.listen(batch -> {
-                    var handled = new ArrayList<Message>();
-                    try (var st = batch.transactionConnection().prepareStatement(dml)) {
-                        int id = 0;
-                        for (var msg : batch.messages()) {
-                            st.setInt(1, id);
-                            st.setString(2, msg.data());
-                            st.addBatch();
-                            handled.add(msg);
-                        }
-                        st.executeBatch();
-                    } catch (SQLException e) {
-                        assertUniquePrimaryKeyViolation(dataSource, e);
-                        throw new RuntimeException(e);
-                    }
-                    return handled;
-                }));
+                () -> this.messageHandler.listen(
+                        () -> {
+                            try {
+                                return this.getConnection();
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
+                        },
+                        batch -> {
+                            var handled = new ArrayList<Message>();
+                            try (var st = batch.transactionConnection().prepareStatement(dml)) {
+                                int id = 0;
+                                for (var msg : batch.messages()) {
+                                    st.setInt(1, id);
+                                    st.setString(2, msg.data());
+                                    st.addBatch();
+                                    handled.add(msg);
+                                }
+                                st.executeBatch();
+                            } catch (SQLException e) {
+                                assertUniquePrimaryKeyViolation(dataSource, e);
+                                throw new RuntimeException(e);
+                            }
+                            return handled;
+                        }));
         assertMessagesInTable(messages, false); // no messages popped
         tearDown(dataSource);
     }
@@ -166,18 +198,26 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages);
+        this.messageQueue.push(messages, this.getConnection());
         assertThrows(
                 RuntimeException.class,
-                () -> this.messageHandler.listen(batch -> {
-                    try (var st = batch.transactionConnection().createStatement()) {
-                        var sql = "select * from foobar";
-                        st.execute(sql);
-                    } catch (SQLException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return null;
-                }));
+                () -> this.messageHandler.listen(
+                        () -> {
+                            try {
+                                return this.getConnection();
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
+                        },
+                        batch -> {
+                            try (var st = batch.transactionConnection().createStatement()) {
+                                var sql = "select * from foobar";
+                                st.execute(sql);
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
+                            return null;
+                        }));
         assertMessagesInTable(messages, false); // no messages popped
         tearDown(dataSource);
     }
@@ -186,27 +226,35 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testMessageBatchSize(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        var msgs = createMessages(10);
+        var messages = createMessages(10);
         int batchSize = 4;
-        this.messageQueue.push(msgs);
+        this.messageQueue.push(messages, this.getConnection());
         var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(batchSize));
-        var msgsMap = msgs.stream().collect(Collectors.toMap(Message::id, Function.identity()));
+        var msgsMap = messages.stream().collect(Collectors.toMap(Message::id, Function.identity()));
         var processed = new ArrayList<Message>();
-        for (int i = 0; i < Math.ceilDiv(msgs.size(), batchSize); i++) {
-            int expectedSize = Math.min(msgs.size() - (batchSize * i), batchSize);
-            handler.listen(batch -> {
-                var batched = batch.messages();
-                assertEquals(expectedSize, batched.size());
-                var expected = new ArrayList<Message>();
-                for (var msg : batched) {
-                    assertTrue(msgsMap.containsKey(msg.id()));
-                    expected.add(msgsMap.get(msg.id()));
-                    msgsMap.remove(msg.id());
-                }
-                assertMessages(expected, batched);
-                processed.addAll(batched);
-                return batched;
-            });
+        for (int i = 0; i < Math.ceilDiv(messages.size(), batchSize); i++) {
+            int expectedSize = Math.min(messages.size() - (batchSize * i), batchSize);
+            handler.listen(
+                    () -> {
+                        try {
+                            return this.getConnection();
+                        } catch (SQLException e) {
+                            throw new RuntimeException(e);
+                        }
+                    },
+                    batch -> {
+                        var batched = batch.messages();
+                        assertEquals(expectedSize, batched.size());
+                        var expected = new ArrayList<Message>();
+                        for (var msg : batched) {
+                            assertTrue(msgsMap.containsKey(msg.id()));
+                            expected.add(msgsMap.get(msg.id()));
+                            msgsMap.remove(msg.id());
+                        }
+                        assertMessages(expected, batched);
+                        processed.addAll(batched);
+                        return batched;
+                    });
             assertMessagesInTable(processed, true);
         }
         assertTrue(msgsMap.isEmpty());
@@ -217,19 +265,27 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testSubsetOfMessagesHandled(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        var msgs = createMessages(10);
+        var messages = createMessages(10);
         var processing = new ArrayList<Message>();
-        processing.add(msgs.get(0));
-        processing.add(msgs.get(1));
-        this.messageQueue.push(msgs);
-        this.messageHandler.listen(batch -> {
-            assertTrue(processing.size() < batch.messages().size());
-            assertTrue(batch.messages().containsAll(processing));
-            return processing;
-        });
+        processing.add(messages.get(0));
+        processing.add(messages.get(1));
+        this.messageQueue.push(messages, this.getConnection());
+        this.messageHandler.listen(
+                () -> {
+                    try {
+                        return this.getConnection();
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                },
+                batch -> {
+                    assertTrue(processing.size() < batch.messages().size());
+                    assertTrue(batch.messages().containsAll(processing));
+                    return processing;
+                });
         assertMessagesInTable(processing, true);
-        msgs.removeAll(processing);
-        assertMessagesInTable(msgs, false);
+        messages.removeAll(processing);
+        assertMessagesInTable(messages, false);
         tearDown(dataSource);
     }
 
@@ -239,25 +295,41 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         configure(dataSource);
         var messages = createMessages(10);
         var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(3));
-        this.messageQueue.push(messages);
+        this.messageQueue.push(messages, this.getConnection());
         var threadMessages1 = new HashSet<Message>();
         var threadMessages2 = new HashSet<Message>();
         Thread t1 = new Thread(() -> {
             try {
-                handler.listen(batch -> {
-                    threadMessages1.addAll(batch.messages());
-                    return batch.messages();
-                });
+                handler.listen(
+                        () -> {
+                            try {
+                                return this.getConnection();
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
+                        },
+                        batch -> {
+                            threadMessages1.addAll(batch.messages());
+                            return batch.messages();
+                        });
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         });
         var t2 = new Thread(() -> {
             try {
-                handler.listen(batch -> {
-                    threadMessages2.addAll(batch.messages());
-                    return batch.messages();
-                });
+                handler.listen(
+                        () -> {
+                            try {
+                                return this.getConnection();
+                            } catch (SQLException e) {
+                                throw new RuntimeException(e);
+                            }
+                        },
+                        batch -> {
+                            threadMessages2.addAll(batch.messages());
+                            return batch.messages();
+                        });
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -283,7 +355,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     }
 
     private void assertMessagesInTable(List<Message> messages, boolean processed) throws SQLException {
-        try (var conn = this.messageQueue.getConnection();
+        try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             var processedClause = "";
             if (processed) {
