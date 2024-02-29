@@ -19,7 +19,10 @@
 
 package corg.io.mq.model.config;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -39,7 +42,7 @@ public interface DatabaseConfigAbstract {
 
     @Value.Parameter
     @Value.Redacted
-    String password();
+    Supplier<String> passwordProvider();
 
     @Value.Default
     default int maxConnectionPoolSize() {
@@ -49,5 +52,10 @@ public interface DatabaseConfigAbstract {
     @Value.Default
     default long connectionMaxLifetime() {
         return TimeUnit.MINUTES.toMillis(30);
+    }
+
+    @Value.Default
+    default Map<String, String> additionalDataSourceProperties() {
+        return Collections.emptyMap();
     }
 }

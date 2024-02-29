@@ -67,7 +67,7 @@ public abstract class AbstractMessageQueueTest {
             this.jdbcContainer.start();
         }
         this.dbConfig = DatabaseConfig.of(
-                this.getJdbcUrl(dataSource), this.getUserName(dataSource), this.getPassword(dataSource));
+                this.getJdbcUrl(dataSource), this.getUserName(dataSource), () -> this.providePassword(dataSource));
         this.mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageQueue = MessageQueue.of(this.dbConfig, this.mqConfig);
         this.messageQueue.initialize();
@@ -91,7 +91,7 @@ public abstract class AbstractMessageQueueTest {
         };
     }
 
-    protected String getPassword(DataSource dataSource) {
+    protected String providePassword(DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_PASSWORD;
             case MYSQL, POSTGRES -> this.jdbcContainer.getPassword();

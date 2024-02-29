@@ -50,14 +50,24 @@ public class MessageQueue {
     private MessageQueue(DatabaseConfig dbConfig, MessageQueueConfig messageQueueConfig) {
         Objects.requireNonNull(dbConfig);
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
-        var configKey = "%s:%s:%s".formatted(dbConfig.jdbcUrl(), dbConfig.username(), dbConfig.password());
+        var providedPassword = dbConfig.passwordProvider().get();
+        var configKey = "%s:%s:%s:%s"
+                .formatted(
+                        dbConfig.jdbcUrl(),
+                        dbConfig.username(),
+                        providedPassword,
+                        dbConfig.additionalDataSourceProperties().hashCode());
         this.hikariDataSource = dataSources.computeIfAbsent(configKey, ck -> {
             HikariConfig hikariConfig = new HikariConfig();
             hikariConfig.setJdbcUrl(dbConfig.jdbcUrl());
             hikariConfig.setUsername(dbConfig.username());
-            hikariConfig.setPassword(dbConfig.password());
+            hikariConfig.setPassword(providedPassword);
             hikariConfig.setMaximumPoolSize(dbConfig.maxConnectionPoolSize());
             hikariConfig.setMaxLifetime(dbConfig.connectionMaxLifetime());
+            for (Map.Entry<String, String> prop :
+                    dbConfig.additionalDataSourceProperties().entrySet()) {
+                hikariConfig.addDataSourceProperty(prop.getKey(), prop.getValue());
+            }
             return new HikariDataSource(hikariConfig);
         });
     }

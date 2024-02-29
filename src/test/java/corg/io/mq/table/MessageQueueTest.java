@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
@@ -204,6 +205,20 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         assertAuditMetadata(messages, expectedReadCount);
         this.messageQueue.read(10);
         assertAuditMetadata(messages, expectedReadCount + 1);
+        tearDown(dataSource);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testAdditionalDataSourceProperties(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        var mqWithProperties = MessageQueue.of(
+                dbConfig.withAdditionalDataSourceProperties(Map.of("cachePrepStmts", "true")), mqConfig);
+        var messages = List.of(createMessage(), createMessage(), createMessage());
+        mqWithProperties.push(messages);
+        assertTableRowCount(messages.size());
+        var pending = mqWithProperties.read(10);
+        assertMessages(messages, pending);
         tearDown(dataSource);
     }
 
