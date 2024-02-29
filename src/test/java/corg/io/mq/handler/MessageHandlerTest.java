@@ -25,10 +25,7 @@ import corg.io.mq.AbstractMessageQueueTest;
 import corg.io.mq.model.config.MessageHandlerConfig;
 import corg.io.mq.model.message.Message;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -233,6 +230,49 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         assertMessagesInTable(processing, true);
         msgs.removeAll(processing);
         assertMessagesInTable(msgs, false);
+        tearDown(dataSource);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testMultiThreading(DataSource dataSource) throws SQLException, InterruptedException {
+        configure(dataSource);
+        var messages = createMessages(10);
+        var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(3));
+        this.messageQueue.push(messages);
+        var threadMessages1 = new HashSet<>();
+        var threadMessages2 = new HashSet<>();
+        Thread t1 = new Thread(() -> {
+            try {
+                handler.listen(batch -> {
+                    threadMessages1.addAll(batch.messages());
+                    return batch.messages();
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        var t2 = new Thread(() -> {
+            try {
+                handler.listen(batch -> {
+                    threadMessages2.addAll(batch.messages());
+                    return batch.messages();
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Thread.sleep(200);
+        t1.start();
+        Thread.sleep(200);
+        t2.start();
+        t1.join();
+        t2.join();
+        assertFalse(threadMessages1.isEmpty());
+        assertFalse(threadMessages2.isEmpty());
+        for (var message : threadMessages1) {
+            assertFalse(threadMessages2.contains(message));
+        }
         tearDown(dataSource);
     }
 
