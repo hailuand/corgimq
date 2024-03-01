@@ -33,6 +33,8 @@ import org.slf4j.MDC;
 public class MessageQueue {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
 
+    public static final String SCHEMA_NAME = "mq";
+
     private final MessageQueueConfig messageQueueConfig;
 
     public static MessageQueue of(MessageQueueConfig messageQueueConfig) {
@@ -43,8 +45,31 @@ public class MessageQueue {
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
     }
 
-    public void initialize(Connection conn) throws SQLException {
-        this.createTableWithSchema(conn);
+    public void createTableWithSchemaIfNotExists(Connection conn) throws SQLException {
+        configureMDC();
+        var createSchemaDdl =
+                """
+                CREATE SCHEMA IF NOT EXISTS "%s";
+                """.formatted(SCHEMA_NAME);
+        var createTableddl =
+                """
+                CREATE TABLE IF NOT EXISTS "%s"."%s" (
+                    "id" VARCHAR(36) PRIMARY KEY,
+                    "data" TEXT NOT NULL,
+                    "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                    "read_count" INTEGER DEFAULT 0 NOT NULL,
+                    "read_by" VARCHAR(16),
+                    "processing_time" TIMESTAMP
+                );
+                """
+                        .formatted(this.tableSchemaName(), this.queueTableName());
+        try (var statement = conn.createStatement()) {
+            logger.debug(createSchemaDdl);
+            statement.execute(createSchemaDdl);
+            logger.debug(createTableddl);
+            statement.execute(createTableddl);
+        }
+        MDC.clear();
     }
 
     public void push(List<Message> messages, Connection conn) throws SQLException {
@@ -123,38 +148,11 @@ public class MessageQueue {
     }
 
     public String tableSchemaName() {
-        return this.messageQueueConfig.schemaName();
+        return SCHEMA_NAME;
     }
 
     public String queueTableName() {
         return "%s_q".formatted(this.messageQueueConfig.queueName());
-    }
-
-    private void createTableWithSchema(Connection conn) throws SQLException {
-        configureMDC();
-        var createSchemaDdl = """
-                CREATE SCHEMA IF NOT EXISTS "%s";
-                """
-                .formatted(this.messageQueueConfig.schemaName());
-        var createTableddl =
-                """
-                CREATE TABLE IF NOT EXISTS "%s"."%s" (
-                    "id" VARCHAR(36) PRIMARY KEY,
-                    "data" TEXT NOT NULL,
-                    "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                    "read_count" INTEGER DEFAULT 0 NOT NULL,
-                    "read_by" VARCHAR(16),
-                    "processing_time" TIMESTAMP
-                );
-                """
-                        .formatted(this.tableSchemaName(), this.queueTableName());
-        try (var statement = conn.createStatement()) {
-            logger.debug(createSchemaDdl);
-            statement.execute(createSchemaDdl);
-            logger.debug(createTableddl);
-            statement.execute(createTableddl);
-        }
-        MDC.clear();
     }
 
     private void markMessagesRead(List<Message> messages, Connection conn) throws SQLException {

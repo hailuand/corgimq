@@ -41,7 +41,6 @@ import org.testcontainers.containers.JdbcDatabaseContainer;
 @SuppressWarnings("SqlSourceToSinkFlow")
 public abstract class AbstractMessageQueueTest {
     protected static final String QUEUE_NAME = "Test_Queue";
-    protected static final String SCHEMA_NAME = "cmq";
     private static final Faker faker = new Faker();
     private static final String H2_JDBC_URL =
             "jdbc:h2:mem:TEST_DB;DATABASE_TO_UPPER=false;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
@@ -76,7 +75,7 @@ public abstract class AbstractMessageQueueTest {
         this.hikariDataSource = new HikariDataSource(hikariConfig);
         this.mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageQueue = MessageQueue.of(this.mqConfig);
-        this.messageQueue.initialize(getConnection());
+        this.messageQueue.createTableWithSchemaIfNotExists(getConnection());
     }
 
     protected Connection getConnection() throws SQLException {
@@ -88,8 +87,8 @@ public abstract class AbstractMessageQueueTest {
                 var st = conn.createStatement()) {
             switch (dataSource) {
                 case H2 -> st.execute("DROP ALL OBJECTS");
-                case POSTGRES -> st.execute("DROP SCHEMA %s CASCADE".formatted(SCHEMA_NAME));
-                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(SCHEMA_NAME));
+                case POSTGRES -> st.execute("DROP SCHEMA %s CASCADE".formatted(MessageQueue.SCHEMA_NAME));
+                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(MessageQueue.SCHEMA_NAME));
             }
         }
         this.hikariDataSource.close();

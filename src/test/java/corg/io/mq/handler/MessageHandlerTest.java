@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import corg.io.mq.AbstractMessageQueueTest;
 import corg.io.mq.model.config.MessageHandlerConfig;
 import corg.io.mq.model.message.Message;
+import corg.io.mq.table.MessageQueue;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
@@ -104,7 +105,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
                 """
-                .formatted(SCHEMA_NAME, secondaryTableName);
+                .formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
         var secondaryDataMapping = new HashMap<Integer, String>();
         this.messageHandler.listen(
                 () -> {
@@ -134,8 +135,8 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         // assert results of other txn
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var rs = st.executeQuery(
-                    "SELECT * FROM \"%s\".\"%s\" ORDER BY \"id\" ASC".formatted(SCHEMA_NAME, secondaryTableName));
+            var rs = st.executeQuery("SELECT * FROM \"%s\".\"%s\" ORDER BY \"id\" ASC"
+                    .formatted(MessageQueue.SCHEMA_NAME, secondaryTableName));
             assertTrue(rs.isBeforeFirst());
 
             while (rs.next()) {
@@ -159,7 +160,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
                 """
-                .formatted(SCHEMA_NAME, secondaryTableName);
+                .formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
         assertThrows(
                 RuntimeException.class,
                 () -> this.messageHandler.listen(

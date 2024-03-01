@@ -48,9 +48,9 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         configure(dataSource);
         assertTableRowCount(0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        messageQueue.push(messages, this.getConnection());
+        this.messageQueue.push(messages, this.getConnection());
         assertTableRowCount(messages.size());
-        var pending = messageQueue.read(10, this.getConnection());
+        var pending = this.messageQueue.read(10, this.getConnection());
         assertMessages(messages, pending);
         tearDown(dataSource);
     }
@@ -60,20 +60,20 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testPopAndRead(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        messageQueue.push(messages, this.getConnection());
+        this.messageQueue.push(messages, this.getConnection());
         assertTableRowCount(messages.size());
-        var pending = messageQueue.read(10, this.getConnection());
+        var pending = this.messageQueue.read(10, this.getConnection());
         assertMessages(messages, pending);
         // Pop in another txn
-        messageQueue.pop(messages, this.getConnection());
-        var pendingPostPop = messageQueue.read(10, this.getConnection());
+        this.messageQueue.pop(messages, this.getConnection());
+        var pendingPostPop = this.messageQueue.read(10, this.getConnection());
         Assertions.assertTrue(pendingPostPop.isEmpty());
 
         // assert in separate txn
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             var rs = st.executeQuery("SELECT * from \"%s\".\"%s\" ORDER BY \"message_time\" ASC"
-                    .formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName()));
+                    .formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName()));
             Assertions.assertTrue(rs.isBeforeFirst());
             List<Message> processed = new ArrayList<>();
             while (rs.next()) {

@@ -43,82 +43,97 @@ Complexity will find you - until then, don't go looking for it 🐶
 ---
 
 ### Get started
-#### Creating a queue
-A message queue is managed by an instance of `MessageQueue`:  
+#### Messages
+Data meant to be enqueued is done with a `Message`:
 
 ```java
-DatabaseConfig databaseConfig = DatabaseConfig.of("jdbc:postgresql://...", "username", "password");
+String serializedData = // ... data source
+Message message = Message.of(serializedData);
+```
+
+#### Creating a queue
+A message queue is managed by an instance of `MessageQueue`.
+
+```java
 MessageQueueConfig messageQueueConfig = MessageQueueConfig.builder()
-        .schemaName("fruits")
-        .queueName("acquired")
+        .queueName("poneglyphs") // Name of queue, table will have '_q' suffix
         .build();
 MessageQueue messageQueue = MessageQueue.of(databaseConfig, messageQueueConfig);
-messageQueue.initialize();
+messageQueue.createTableWithSchemaIfNotExists();
 ```
 
-This creates table `acquired_q` in the `fruits` schema - the given schema will be created if it does not already exist.
-
 ```
-postgres=# \dt fruits.*
+postgres=# \dt mq.*
            List of relations
- Schema |    Name    | Type  |  Owner
---------+------------+-------+----------
- fruits | acquired_q | table | postgres
+ Schema |     Name     | Type  |  Owner
+--------+--------------+-------+---------
+ mq     | poneglyphs_q | table | shanks
 (1 row)
 ```
 
 #### Pushing messages
-Once a `MessageQueue` is created, messages can be pushed with the `push(List)` method. 
+Once a `MessageQueue` is created, `Message`s can be pushed with `push(List)`:
 
 ```java
-Message message1 = Message.of(faker.onePiece().akumasNoMi());
-Message message2 = Message.of(faker.onePiece().akumasNoMi());
+Message message1 = Message.of("Whole Cake Island");
+Message message2 = Message.of("Zou");
 messageQueue.push(List.of(message1, message2));
 ```
 
+Table after pushing messages:
+
 ```
-postgres=# select * from fruits.acquired_q;
-                  id                  |      data       |        message_time        | read_count | read_by | processing_time
+postgres=# select * from mq.poneglyphs_q;
+                  id                  |        data       |        message_time        | read_count | read_by | processing_time
 --------------------------------------+-----------------+----------------------------+------------+---------+-----------------
- 9245867e-f7f1-40e4-9142-bb1457aff9ec | Nagi Nagi no Mi | 2024-02-27 10:12:57.486346 |          0 |         |
- a174f9d1-d3a9-4583-9396-d3ed575a4ebf | Mero Mero no Mi | 2024-02-27 10:12:57.486346 |          0 |         |
+ 9245867e-f7f1-40e4-9142-bb1457aff9ec | Whole Cake Island | 2024-02-27 10:12:57.486346 |          0 |         |
+ a174f9d1-d3a9-4583-9396-d3ed575a4ebf | Zou               | 2024-02-27 10:12:57.486346 |          0 |         |
 (2 rows)
 ```
 
 #### Reading messages
-Messages in the queue read in ascending `message_time` order. To read, we use an intsance of `MessageHandler`.
+Unread `Messages` in the queue are read in ascending `message_time` through an instance of `MessageHandler`:
+
 ```java
-MessageHandlerConfig messageHandlerConfig = MessageHandlerConfig.of(1);
-MessageHandler messageHandler = MessageHandler.of(messageQueue, messageHandlerConfig);
-messageHandler.listen(messageBatch -> {
-    for(var message : messageBatch.messages()) {
-        System.out.printf("Shanks - we found the %s!%n", message.data());
+MessageHandler messageHandler = MessageHandler.of(messageQueue, MessageHandlerConfig.of(1)); // Read one message at a time
+Supplier<Connection> connectionSupplier = // ...Code to acquire a connection to database
+messageHandler.listen(connectionSupplier, messageBatch -> {
+    for (Message message : messageBatch.messages()) {
+        System.out.printf("Shanks - we found a road poneglyph at %s!%n", message.data());
     }
-    return messageBatch.messages();
-});
-// Prints out: "Shanks - we found the Nagi Nagi no Mi!"
+    return messageBatch.messages(); // List of Messages to be popped
+    });
+// "Shanks - we found a road poneglyph at Whole Cake Island!"
 ```
 
-`MessageHandler` reads unread messages i.e. messages without a `processing_time`
-
-The above snippet's execution results in the following:
+Table after handler execution:
 ```
-postgres=# select * from fruits.acquired_q;
-                  id                  |      data       |        message_time        | read_count | read_by  |      processing_time
+postgres=# select * from mq.poneglyphs_q;
+                  id                  |        data       |        message_time        | read_count | read_by  |      processing_time
 --------------------------------------+-----------------+----------------------------+------------+----------+----------------------------
- a174f9d1-d3a9-4583-9396-d3ed575a4ebf | Mero Mero no Mi | 2024-02-27 10:12:57.486346 |          0 |          |
- 9245867e-f7f1-40e4-9142-bb1457aff9ec | Nagi Nagi no Mi | 2024-02-27 10:12:57.486346 |          1 | postgres | 2024-02-27 10:14:29.911197
+ a174f9d1-d3a9-4583-9396-d3ed575a4ebf | Zou               | 2024-02-27 10:12:57.486346 |          0 |          |
+ 9245867e-f7f1-40e4-9142-bb1457aff9ec | Whole Cake Island | 2024-02-27 10:12:57.486346 |          1 | beckman  | 2024-02-27 10:14:29.911197
 (2 rows)
 ```
-Note that the `read_count`, `read_by`, and `processing_time` have been updated for the message `9245867e-f7f1-40e4-9142-bb1457aff9ec` 
-corresponding to `Nagi Nagi no Mi`.
-
-Subsequent `listen()` invocations no longer receive this message as `processing_time` is set.
+After handler execution, returned `Messages` have their `read_count`, `read_by`, and `processing_time` updated, and subsequent 
+calls to `listen()` no longer receive them.
 
 ---
 
-### Configuration
-_TODO_
+### ⚙️ Configuration
+#### Message queue
+
+🔤 `queueName`
+
+Name of message queue. Each queue has its own table within the `mq` schema, suffixed with `_q`.
+
+#### Message handler
+
+🔢 `messageBatchSize`
+
+Maximum number of `Message`s to serve to a `MessageHandler` in a single batch. 
+
+_Default:_ `10`
 
 ---
 
