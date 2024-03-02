@@ -13,11 +13,9 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 - Lightweight: bring **just your DBMS.** 🚀
 - Batteries included: sensible out-of-the-box defaults with a few optional knobs to get you dangerous _fast_. 🔋
 - Transactional: shared access of JDBC `Connection` available to provide transactional message handling. 🤝
-- Auditable: audit information in the queue captures if, when, and who read a message. 🔎
+- Auditable: audit information in the queue captures if, when, and who has read a message. 🔎
 - Guaranteed **exactly-once delivery** of a message to a reader - if someone's currently reading it, no one else receives it.
 - Messages remain in queue until removed.
-
-Complexity will find you - until then, don't go looking for it 🐶   
 
 ---
 
@@ -27,7 +25,8 @@ Complexity will find you - until then, don't go looking for it 🐶
   * [Creating a queue](#creating-a-queue)
   * [Pushing messages](#pushing-messages)
   * [Reading messages](#reading-messages)
-* [Configuration](#configuration)
+* [Configuration](#-configuration)
+* [Notes](#-notes)
 * [References](#references)
 
 ---
@@ -43,14 +42,6 @@ Complexity will find you - until then, don't go looking for it 🐶
 ---
 
 ### Get started
-#### Messages
-Data meant to be enqueued is done with a `Message`:
-
-```java
-String serializedData = // ... data source
-Message message = Message.of(serializedData);
-```
-
 #### Creating a queue
 A message queue is managed by an instance of `MessageQueue`.
 
@@ -72,7 +63,7 @@ postgres=# \dt mq.*
 ```
 
 #### Pushing messages
-Once a `MessageQueue` is created, `Message`s can be pushed with `push(List)`:
+Once a `MessageQueue` is created, data to enqueue is wrapped as a `Message`. A `Message` is enqueued with `push(List)`:
 
 ```java
 Message message1 = Message.of("Whole Cake Island");
@@ -80,7 +71,7 @@ Message message2 = Message.of("Zou");
 messageQueue.push(List.of(message1, message2));
 ```
 
-Table after pushing messages:
+Table after push:
 
 ```
 postgres=# select * from mq.poneglyphs_q;
@@ -92,13 +83,13 @@ postgres=# select * from mq.poneglyphs_q;
 ```
 
 #### Reading messages
-Unread `Messages` in the queue are read in ascending `message_time` through an instance of `MessageHandler`:
+Unread `Message`s in the queue are read in ascending `message_time` with an instance of `MessageHandler`:
 
 ```java
 MessageHandler messageHandler = MessageHandler.of(messageQueue, MessageHandlerConfig.of(1)); // Read one message at a time
-Supplier<Connection> connectionSupplier = // ...Code to acquire a connection to database
-messageHandler.listen(connectionSupplier, messageBatch -> {
-    for (Message message : messageBatch.messages()) {
+Supplier<Connection> connectionSupplier = // Code to acquire a connection to database
+messageHandler.listen(connectionSupplier, messageHandlerBatch -> {
+    for (Message message : messageHandlerBatch.messages()) {
         System.out.printf("Shanks - we found a road poneglyph at %s!%n", message.data());
     }
     return messageBatch.messages(); // List of Messages to be popped
@@ -115,7 +106,7 @@ postgres=# select * from mq.poneglyphs_q;
  9245867e-f7f1-40e4-9142-bb1457aff9ec | Whole Cake Island | 2024-02-27 10:12:57.486346 |          1 | beckman  | 2024-02-27 10:14:29.911197
 (2 rows)
 ```
-After handler execution, returned `Messages` have their `read_count`, `read_by`, and `processing_time` updated, and subsequent 
+After read, `Messages` have their `read_count`, `read_by`, and `processing_time` updated. Subsequent 
 calls to `listen()` no longer receive them.
 
 ---
@@ -134,6 +125,27 @@ Name of message queue. Each queue has its own table within the `mq` schema, suff
 Maximum number of `Message`s to serve to a `MessageHandler` in a single batch. 
 
 _Default:_ `10`
+
+### ✏️ Notes
+A `Message` currently being read by a `MessageHandler` has its row locked until the function completes. If multiple
+`MessageHandler`s are operating on the same queue, locked rows are skipped to prevent the same message being received
+by different handlers.
+
+The transaction's `Connection` can be accessed through the `MessageHandlerBatch` argument passed to the
+`Function`'s input:
+```java
+MessageHandler messageHandler = MessageHandler.of(messageQueue, MessageHandlerConfig.of(1));
+Supplier<Connection> connectionSupplier = // ...
+messageHandler.listen(connectionSupplier, messageHandlerBatch -> {
+    try(Statement statement : messageHandlerBatch.transactionConnection()) {
+        // Do something with Statement to participate in transaction
+    } catch (SQLException e) {
+        throw new RuntimeException(e);
+    }
+    
+    return messageBatch.messages();
+    });
+```
 
 ---
 
