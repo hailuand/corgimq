@@ -46,10 +46,7 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 A message queue is managed by an instance of `MessageQueue`.
 
 ```java
-MessageQueueConfig messageQueueConfig = MessageQueueConfig.builder()
-        .queueName("poneglyphs") // Name of queue, table will have '_q' suffix
-        .build();
-MessageQueue messageQueue = MessageQueue.of(databaseConfig, messageQueueConfig);
+MessageQueue messageQueue = MessageQueue.of(MessageQueueConfig.of("poneglyphs")); // Name of queue, table will have '_q' suffix
 messageQueue.createTableWithSchemaIfNotExists();
 ```
 
