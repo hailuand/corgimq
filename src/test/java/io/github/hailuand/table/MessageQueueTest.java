@@ -17,12 +17,12 @@
  *  under the License.
  */
 
-package corg.io.mq.table;
+package io.github.hailuand.table;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import corg.io.mq.AbstractMessageQueueTest;
-import corg.io.mq.model.message.Message;
+import io.github.hailuand.AbstractMessageQueueTest;
+import io.github.hailuand.model.message.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -83,7 +83,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             }
             var messagesMap = messages.stream().collect(Collectors.toMap(Message::id, Function.identity()));
             for (var processedMessage : processed) {
-                assertTrue(messagesMap.containsKey(processedMessage.id()));
+                Assertions.assertTrue(messagesMap.containsKey(processedMessage.id()));
                 var unprocessedMessage = messagesMap.get(processedMessage.id());
                 assertEquals(unprocessedMessage, processedMessage);
             }

@@ -17,16 +17,16 @@
  *  under the License.
  */
 
-package corg.io.mq;
+package io.github.hailuand;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import corg.io.mq.model.config.MessageQueueConfig;
-import corg.io.mq.model.message.Message;
-import corg.io.mq.table.MessageQueue;
+import io.github.hailuand.model.config.MessageQueueConfig;
+import io.github.hailuand.model.message.Message;
+import io.github.hailuand.table.MessageQueue;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;

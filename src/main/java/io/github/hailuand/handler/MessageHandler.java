@@ -17,13 +17,13 @@
  *  under the License.
  */
 
-package corg.io.mq.handler;
+package io.github.hailuand.handler;
 
-import corg.io.mq.model.config.MessageHandlerConfig;
-import corg.io.mq.model.message.Message;
-import corg.io.mq.model.message.MessageHandlerBatch;
-import corg.io.mq.table.MessageQueue;
-import corg.io.mq.table.TransactionManager;
+import io.github.hailuand.model.config.MessageHandlerConfig;
+import io.github.hailuand.model.message.Message;
+import io.github.hailuand.model.message.MessageHandlerBatch;
+import io.github.hailuand.table.MessageQueue;
+import io.github.hailuand.table.TransactionManager;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;

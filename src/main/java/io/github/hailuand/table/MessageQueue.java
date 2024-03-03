@@ -17,10 +17,10 @@
  *  under the License.
  */
 
-package corg.io.mq.table;
+package io.github.hailuand.table;
 
-import corg.io.mq.model.config.MessageQueueConfig;
-import corg.io.mq.model.message.Message;
+import io.github.hailuand.model.config.MessageQueueConfig;
+import io.github.hailuand.model.message.Message;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;

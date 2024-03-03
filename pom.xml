@@ -4,10 +4,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>corg.io</groupId>
+    <groupId>io.github.hailuand</groupId>
     <name>CorgiMQ</name>
     <artifactId>corgimq</artifactId>
     <version>1.0-SNAPSHOT</version>
+
+    <licenses>
+        <license>
+
+        </license>
+    </licenses>
 
     <properties>
         <!-- maven project -->

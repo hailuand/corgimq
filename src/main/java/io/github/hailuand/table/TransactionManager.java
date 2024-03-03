@@ -17,28 +17,24 @@
  *  under the License.
  */
 
-package corg.io.mq.model.message;
+package io.github.hailuand.table;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import java.util.UUID;
-import org.immutables.value.Value;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-@Value.Immutable
-@Value.Style(
-        typeAbstract = "*Abstract",
-        typeImmutable = "*",
-        jdkOnly = true,
-        optionalAcceptNullable = true,
-        strictBuilder = true)
-@JsonSerialize(as = Message.class)
-@JsonDeserialize(as = Message.class)
-public interface MessageAbstract {
-    @Value.Default
-    default String id() {
-        return UUID.randomUUID().toString();
+public class TransactionManager {
+    public void executeInTransaction(Supplier<Connection> supplier, Consumer<Connection> consumer) throws SQLException {
+        try (var conn = supplier.get()) {
+            conn.setAutoCommit(false);
+            try {
+                consumer.accept(conn);
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                throw new RuntimeException(e);
+            }
+        }
     }
-
-    @Value.Parameter
-    String data();
 }

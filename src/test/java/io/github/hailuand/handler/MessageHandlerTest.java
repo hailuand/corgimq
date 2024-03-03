@@ -17,18 +17,19 @@
  *  under the License.
  */
 
-package corg.io.mq.handler;
+package io.github.hailuand.handler;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import corg.io.mq.AbstractMessageQueueTest;
-import corg.io.mq.model.config.MessageHandlerConfig;
-import corg.io.mq.model.message.Message;
-import corg.io.mq.table.MessageQueue;
+import io.github.hailuand.AbstractMessageQueueTest;
+import io.github.hailuand.model.config.MessageHandlerConfig;
+import io.github.hailuand.model.message.Message;
+import io.github.hailuand.table.MessageQueue;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -245,10 +246,10 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     },
                     batch -> {
                         var batched = batch.messages();
-                        assertEquals(expectedSize, batched.size());
+                        Assertions.assertEquals(expectedSize, batched.size());
                         var expected = new ArrayList<Message>();
                         for (var msg : batched) {
-                            assertTrue(msgsMap.containsKey(msg.id()));
+                            Assertions.assertTrue(msgsMap.containsKey(msg.id()));
                             expected.add(msgsMap.get(msg.id()));
                             msgsMap.remove(msg.id());
                         }
@@ -258,7 +259,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     });
             assertMessagesInTable(processed, true);
         }
-        assertTrue(msgsMap.isEmpty());
+        Assertions.assertTrue(msgsMap.isEmpty());
         tearDown(dataSource);
     }
 
@@ -281,7 +282,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 },
                 batch -> {
                     assertTrue(processing.size() < batch.messages().size());
-                    assertTrue(batch.messages().containsAll(processing));
+                    Assertions.assertTrue(batch.messages().containsAll(processing));
                     return processing;
                 });
         assertMessagesInTable(processing, true);

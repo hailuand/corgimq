@@ -17,7 +17,7 @@
  *  under the License.
  */
 
-package corg.io.mq;
+package io.github.hailuand;
 
 import static org.junit.jupiter.api.Assertions.*;
 

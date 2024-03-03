@@ -17,10 +17,8 @@
  *  under the License.
  */
 
-package corg.io.mq.model.message;
+package io.github.hailuand.model.config;
 
-import java.sql.Connection;
-import java.util.List;
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -30,10 +28,10 @@ import org.immutables.value.Value;
         jdkOnly = true,
         optionalAcceptNullable = true,
         strictBuilder = true)
-public interface MessageHandlerBatchAbstract {
+public interface MessageHandlerConfigAbstract {
     @Value.Parameter
-    List<Message> messages();
-
-    @Value.Parameter
-    Connection transactionConnection();
+    @Value.Default
+    default int messageBatchSize() {
+        return 10;
+    }
 }
