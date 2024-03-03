@@ -33,6 +33,9 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Encapsulates the reading, processing, and popping of {@link Message}s from a {@link MessageQueue}.
+ */
 public class MessageHandler {
     private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
 
@@ -40,28 +43,41 @@ public class MessageHandler {
     private final MessageHandlerConfig messageHandlerConfig;
     private final TransactionManager transactionManager;
 
+    /**
+     * Creates a handler for messages in {@code messageQueue} with a default configuration.
+     * @param messageQueue {@link MessageQueue} reading from
+     * @return Instance of {@link MessageHandler}
+     */
     public static MessageHandler of(MessageQueue messageQueue) {
         return of(messageQueue, MessageHandlerConfig.builder().build());
     }
 
+    /**
+     * Creates a handler for messages in {@code messageQueue} with a custom configuration.
+     * @param messageQueue {@link MessageQueue} reading from
+     * @param messageHandlerConfig Options for handler
+     * @return Instance of {@link MessageHandler}
+     */
     public static MessageHandler of(MessageQueue messageQueue, MessageHandlerConfig messageHandlerConfig) {
         return new MessageHandler(messageQueue, messageHandlerConfig);
     }
 
-    private MessageHandler(MessageQueue messageQueue, MessageHandlerConfig messageHandlerConfig) {
-        this.messageQueue = Objects.requireNonNull(messageQueue);
-        this.messageHandlerConfig = Objects.requireNonNull(messageHandlerConfig);
-        this.transactionManager = new TransactionManager();
-    }
-
-    public void listen(Supplier<Connection> connectionProvider, Function<MessageHandlerBatch, List<Message>> handler)
+    /**
+     * Reads, applies function, and pops messages from the queue all in transaction. Messages being read
+     * are row-locked, and won't be visible to other {@link MessageHandler}s.
+     * @param connectionProvider Implementation to provide a new connection for transaction
+     * @param handlerFunction Function to apply to read messages
+     * @throws SQLException If an exception occurs during transaction
+     */
+    public void listen(
+            Supplier<Connection> connectionProvider, Function<MessageHandlerBatch, List<Message>> handlerFunction)
             throws SQLException {
         this.transactionManager.executeInTransaction(connectionProvider, transactionConnection -> {
             try {
                 var messages =
                         this.messageQueue.read(this.messageHandlerConfig.messageBatchSize(), transactionConnection);
                 if (!messages.isEmpty()) {
-                    var handled = handler.apply(MessageHandlerBatch.of(messages, transactionConnection));
+                    var handled = handlerFunction.apply(MessageHandlerBatch.of(messages, transactionConnection));
                     this.messageQueue.pop(handled, transactionConnection);
                 } else {
                     logger.debug("No messages returned to handle");
@@ -70,5 +86,11 @@ public class MessageHandler {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private MessageHandler(MessageQueue messageQueue, MessageHandlerConfig messageHandlerConfig) {
+        this.messageQueue = Objects.requireNonNull(messageQueue);
+        this.messageHandlerConfig = Objects.requireNonNull(messageHandlerConfig);
+        this.transactionManager = new TransactionManager();
     }
 }

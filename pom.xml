@@ -42,6 +42,7 @@
         <jacoco.version>0.8.11</jacoco.version>
         <!-- maven plugins -->
         <maven.dependency.plugin.version>3.6.1</maven.dependency.plugin.version>
+        <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
         <!-- test containers -->
         <testcontainers.version>1.19.6</testcontainers.version>
         <!-- hikari cp -->
@@ -256,5 +257,15 @@
             </plugin>
         </plugins>
     </build>
+
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>${maven.javadoc.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </reporting>
 
 </project>

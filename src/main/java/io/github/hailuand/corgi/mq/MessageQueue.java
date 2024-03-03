@@ -19,6 +19,7 @@
 
 package io.github.hailuand.corgi.mq;
 
+import io.github.hailuand.corgi.mq.handler.MessageHandler;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import java.sql.Connection;
@@ -30,6 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+/**
+ * Interface for managing a message queue in a DBMS. Allows for the creation of a queue,
+ * and pushing + popping of {@link Message}s directly.
+ * See {@link MessageHandler} for how to encapsulate reading and processing messages.
+ */
 public class MessageQueue {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
 
@@ -45,13 +51,18 @@ public class MessageQueue {
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
     }
 
+    /**
+     * Creates the schema and message queue table if they don't yet exist.
+     * @param conn {@link Connection} to database
+     * @throws SQLException If unable to execute creation DDL
+     */
     public void createTableWithSchemaIfNotExists(Connection conn) throws SQLException {
         configureMDC();
         var createSchemaDdl =
                 """
                 CREATE SCHEMA IF NOT EXISTS "%s";
                 """.formatted(SCHEMA_NAME);
-        var createTableddl =
+        var ddl =
                 """
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" VARCHAR(36) PRIMARY KEY,
@@ -66,12 +77,18 @@ public class MessageQueue {
         try (var statement = conn.createStatement()) {
             logger.debug(createSchemaDdl);
             statement.execute(createSchemaDdl);
-            logger.debug(createTableddl);
-            statement.execute(createTableddl);
+            logger.debug(ddl);
+            statement.execute(ddl);
         }
         MDC.clear();
     }
 
+    /**
+     * Pushes {@link Message}s to the queue.
+     * @param messages {@link Message}s to push
+     * @param conn {@link Connection} to database
+     * @throws SQLException if database-level exception occurs while pushing messages
+     */
     public void push(List<Message> messages, Connection conn) throws SQLException {
         configureMDC();
         if (messages.isEmpty()) {
@@ -98,6 +115,13 @@ public class MessageQueue {
         MDC.clear();
     }
 
+    /**
+     * Pops {@link Message}s from the queue, causing them to no longer be received by any readers.
+     * 'Pop' means to mark the messages as processed, not their physical removal.
+     * @param messages {@link Message}s to mark read.
+     * @param conn {@link Connection} to database
+     * @throws SQLException If a database-level exception occurs while popping
+     */
     public void pop(List<Message> messages, Connection conn) throws SQLException {
         configureMDC();
         var dml =
@@ -119,6 +143,14 @@ public class MessageQueue {
         MDC.clear();
     }
 
+    /**
+     * Reads {@code numMessages} of {@link Message}s from the queue, ordered by message time. Results in
+     * the {@link Message}s audit metadata being updated.
+     * @param numMessages Maximum number of messages to read from the queue.
+     * @param conn {@link Connection} to database
+     * @return Available {@link Message}s
+     * @throws SQLException If a database-level exception occurs during read.
+     */
     public List<Message> read(int numMessages, Connection conn) throws SQLException {
         configureMDC();
         var sql =
