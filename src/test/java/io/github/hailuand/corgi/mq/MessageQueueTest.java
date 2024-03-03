@@ -17,12 +17,12 @@
  *  under the License.
  */
 
-package io.github.hailuand.table;
+package io.github.hailuand.corgi.mq;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
-import io.github.hailuand.model.message.Message;
+import io.github.hailuand.corgi.mq.model.message.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;

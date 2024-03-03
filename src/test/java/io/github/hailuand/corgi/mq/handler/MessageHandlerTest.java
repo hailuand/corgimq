@@ -17,14 +17,14 @@
  *  under the License.
  */
 
-package io.github.hailuand.handler;
+package io.github.hailuand.corgi.mq.handler;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
-import io.github.hailuand.model.config.MessageHandlerConfig;
-import io.github.hailuand.model.message.Message;
-import io.github.hailuand.table.MessageQueue;
+import io.github.hailuand.corgi.mq.MessageQueue;
+import io.github.hailuand.corgi.mq.model.config.MessageHandlerConfig;
+import io.github.hailuand.corgi.mq.model.message.Message;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;

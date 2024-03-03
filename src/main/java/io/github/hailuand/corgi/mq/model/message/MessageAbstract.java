@@ -17,7 +17,7 @@
  *  under the License.
  */
 
-package io.github.hailuand.model.message;
+package io.github.hailuand.corgi.mq.model.message;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;

@@ -17,7 +17,7 @@
  *  under the License.
  */
 
-package io.github.hailuand.model.config;
+package io.github.hailuand.corgi.mq.model.config;
 
 import org.immutables.value.Value;
 

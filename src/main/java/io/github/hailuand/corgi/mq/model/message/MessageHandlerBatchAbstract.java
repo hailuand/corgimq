@@ -17,24 +17,23 @@
  *  under the License.
  */
 
-package io.github.hailuand.table;
+package io.github.hailuand.corgi.mq.model.message;
 
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.List;
+import org.immutables.value.Value;
 
-public class TransactionManager {
-    public void executeInTransaction(Supplier<Connection> supplier, Consumer<Connection> consumer) throws SQLException {
-        try (var conn = supplier.get()) {
-            conn.setAutoCommit(false);
-            try {
-                consumer.accept(conn);
-                conn.commit();
-            } catch (Exception e) {
-                conn.rollback();
-                throw new RuntimeException(e);
-            }
-        }
-    }
+@Value.Immutable
+@Value.Style(
+        typeAbstract = "*Abstract",
+        typeImmutable = "*",
+        jdkOnly = true,
+        optionalAcceptNullable = true,
+        strictBuilder = true)
+public interface MessageHandlerBatchAbstract {
+    @Value.Parameter
+    List<Message> messages();
+
+    @Value.Parameter
+    Connection transactionConnection();
 }
