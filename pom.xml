@@ -9,11 +9,13 @@
     <artifactId>corgimq</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <licenses>
-        <license>
-
-        </license>
-    </licenses>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <name>Central Repository OSSRH</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <!-- maven project -->
@@ -26,8 +28,6 @@
         <postgresql.version>42.7.2</postgresql.version>
         <!-- mysql -->
         <mysql.version>8.3.0</mysql.version>
-        <!-- jackson -->
-        <jackson.version>2.16.1</jackson.version>
         <!-- slf4j -->
         <slf4j.api.version>2.0.12</slf4j.api.version>
         <!-- log4j2 -->
@@ -58,18 +58,6 @@
             <artifactId>value</artifactId>
             <version>${immutables.version}</version>
             <scope>provided</scope>
-        </dependency>
-
-        <!-- JACKSON -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
 
         <!-- POSTGRES -->

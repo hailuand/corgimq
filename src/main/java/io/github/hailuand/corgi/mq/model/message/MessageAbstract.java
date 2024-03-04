@@ -19,8 +19,6 @@
 
 package io.github.hailuand.corgi.mq.model.message;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.UUID;
 import org.immutables.value.Value;
 
@@ -31,8 +29,6 @@ import org.immutables.value.Value;
         jdkOnly = true,
         optionalAcceptNullable = true,
         strictBuilder = true)
-@JsonSerialize(as = Message.class)
-@JsonDeserialize(as = Message.class)
 public interface MessageAbstract {
     @Value.Default
     default String id() {

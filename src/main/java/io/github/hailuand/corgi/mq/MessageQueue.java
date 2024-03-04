@@ -43,12 +43,13 @@ public class MessageQueue {
 
     private final MessageQueueConfig messageQueueConfig;
 
+    /**
+     * Creates a new instance of a message queue.
+     * @param messageQueueConfig Configuration to use for creating queue
+     * @return New {@link MessageQueue} instance
+     */
     public static MessageQueue of(MessageQueueConfig messageQueueConfig) {
         return new MessageQueue(messageQueueConfig);
-    }
-
-    private MessageQueue(MessageQueueConfig messageQueueConfig) {
-        this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
     }
 
     /**
@@ -185,6 +186,10 @@ public class MessageQueue {
 
     public String queueTableName() {
         return "%s_q".formatted(this.messageQueueConfig.queueName());
+    }
+
+    private MessageQueue(MessageQueueConfig messageQueueConfig) {
+        this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
     }
 
     private void markMessagesRead(List<Message> messages, Connection conn) throws SQLException {
