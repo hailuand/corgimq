@@ -4,15 +4,39 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.hailuand</groupId>
     <name>CorgiMQ</name>
+    <description>A lightweight Java message queue library on JDBC.</description>
+    <url>https://github.com/hailuand/corgimq</url>
+    <groupId>io.github.hailuand</groupId>
     <artifactId>corgimq</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Andreas Hailu</name>
+            <email>andreashailu@gmail.com</email>
+            <organization>andreashailu</organization>
+            <organizationUrl>https://github.com/hailuand/corgimq</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/hailuand/corgimq.git</connection>
+        <developerConnection>scm:git:ssh://github.com/hailuand/corgimq.git</developerConnection>
+        <url>https://github.com/hailuand/corgimq/tree/main</url>
+    </scm>
 
     <distributionManagement>
         <repository>
             <id>ossrh</id>
-            <name>Central Repository OSSRH</name>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
@@ -43,12 +67,17 @@
         <!-- maven plugins -->
         <maven.dependency.plugin.version>3.6.1</maven.dependency.plugin.version>
         <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
+        <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
+        <maven.gpg.plugin.version>3.1.0</maven.gpg.plugin.version>
+        <maven.release.plugin.version>3.0.1</maven.release.plugin.version>
         <!-- test containers -->
         <testcontainers.version>1.19.6</testcontainers.version>
-        <!-- hikari cp -->
+        <!-- hikaricp -->
         <hikaricp.version>5.1.0</hikaricp.version>
         <!-- spotless -->
         <spotless.version>2.43.0</spotless.version>
+        <!-- sonatype -->
+        <sonatype.publish.plugin.version>0.4.0</sonatype.publish.plugin.version>
     </properties>
 
     <dependencies>
@@ -243,17 +272,76 @@
                     </execution>
                 </executions>
             </plugin>
-        </plugins>
-    </build>
-
-    <reporting>
-        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven.source.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${maven.javadoc.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>${sonatype.publish.plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <tokenAuth>true</tokenAuth>
+                </configuration>
             </plugin>
         </plugins>
-    </reporting>
-
+    </build>
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven.gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>${maven.release.plugin.version}</version>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
