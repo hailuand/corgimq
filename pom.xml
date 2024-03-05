@@ -312,10 +312,12 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${maven.release.plugin.version}</version>
                 <configuration>
+                    <scmShallowClone>false</scmShallowClone>
                     <scmCommentPrefix>[maven-release-plugin]</scmCommentPrefix>
                     <checkModificationExcludes>
                         <checkModificationExclude>pom.xml</checkModificationExclude>
                     </checkModificationExcludes>
+                    <releaseProfiles>release</releaseProfiles>
                 </configuration>
             </plugin>
         </plugins>
