@@ -20,7 +20,7 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 ---
 
 ### Index
-* [DBMS compatability & testing](#dbms-compatability--testing)
+* [DBMS compatability & testing](#dbms-compatability)
 * [Get started](#get-started)
   * [Creating a queue](#creating-a-queue)
   * [Pushing messages](#pushing-messages)
