@@ -272,7 +272,6 @@
                 <artifactId>spotless-maven-plugin</artifactId>
                 <version>${spotless.version}</version>
                 <configuration>
-                    <ratchetFrom>origin/main</ratchetFrom>
                     <java>
                         <palantirJavaFormat />
                         <removeUnusedImports />
