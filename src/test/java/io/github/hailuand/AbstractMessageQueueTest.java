@@ -20,14 +20,10 @@
 package io.github.hailuand;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import io.github.hailuand.corgi.mq.MessageQueue;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,93 +31,18 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
-import org.testcontainers.DockerClientFactory;
-import org.testcontainers.containers.JdbcDatabaseContainer;
 
-@SuppressWarnings("SqlSourceToSinkFlow")
-public abstract class AbstractMessageQueueTest {
+public abstract class AbstractMessageQueueTest extends DbmsTest {
     protected static final String QUEUE_NAME = "Test_Queue";
     private static final Faker faker = new Faker();
-    private static final String H2_JDBC_URL =
-            "jdbc:h2:mem:TEST_DB;DATABASE_TO_UPPER=false;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
-    private static final String H2_USER_NAME = "sa";
-    private static final String H2_PASSWORD = "";
-
-    private JdbcDatabaseContainer<?> jdbcContainer;
-    protected MessageQueueConfig mqConfig;
     protected MessageQueue messageQueue;
 
-    private HikariDataSource hikariDataSource;
-
+    @Override
     protected void configure(DataSource dataSource) throws SQLException {
-        switch (dataSource) {
-            case POSTGRES -> {
-                assumeTrue(DockerClientFactory.instance().isDockerAvailable());
-                this.jdbcContainer = RelationalTestUtil.postgresContainer();
-            }
-            case MYSQL -> {
-                assumeTrue(DockerClientFactory.instance().isDockerAvailable());
-                this.jdbcContainer = RelationalTestUtil.mySQLContainer();
-            }
-        }
-        if (this.jdbcContainer != null && !jdbcContainer.isRunning()) {
-            this.jdbcContainer.start();
-        }
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
-        hikariConfig.setUsername(this.getUserName(dataSource));
-        hikariConfig.setPassword(this.getPassword(dataSource));
-        hikariConfig.setPoolName("CorgiMQ Test Pool");
-        this.hikariDataSource = new HikariDataSource(hikariConfig);
+        super.configure(dataSource);
         this.mqConfig = MessageQueueConfig.of(QUEUE_NAME);
         this.messageQueue = MessageQueue.of(this.mqConfig);
         this.messageQueue.createTableWithSchemaIfNotExists(getConnection());
-    }
-
-    protected Connection getConnection() throws SQLException {
-        return hikariDataSource.getConnection();
-    }
-
-    protected void tearDown(DataSource dataSource) throws SQLException {
-        try (var conn = this.getConnection();
-                var st = conn.createStatement()) {
-            switch (dataSource) {
-                case H2 -> st.execute("DROP ALL OBJECTS");
-                case POSTGRES -> st.execute("DROP SCHEMA %s CASCADE".formatted(MessageQueue.SCHEMA_NAME));
-                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(MessageQueue.SCHEMA_NAME));
-            }
-        }
-        this.hikariDataSource.close();
-    }
-
-    protected String getUserName(DataSource dataSource) {
-        return switch (dataSource) {
-            case H2 -> H2_USER_NAME;
-            case MYSQL, POSTGRES -> this.jdbcContainer.getUsername();
-        };
-    }
-
-    protected String getPassword(DataSource dataSource) {
-        return switch (dataSource) {
-            case H2 -> H2_PASSWORD;
-            case MYSQL, POSTGRES -> this.jdbcContainer.getPassword();
-        };
-    }
-
-    protected String getJdbcUrl(DataSource dataSource) {
-        return switch (dataSource) {
-            case H2 -> H2_JDBC_URL;
-            case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
-            case POSTGRES -> this.jdbcContainer.getJdbcUrl();
-        };
-    }
-
-    protected void assertUniquePrimaryKeyViolation(DataSource dataSource, SQLException exception) {
-        switch (dataSource) {
-            case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
-            case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
-            case POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
-        }
     }
 
     protected void assertTableRowCount(int expectedRowCount) throws SQLException {
@@ -185,11 +106,5 @@ public abstract class AbstractMessageQueueTest {
             var actualMessage = actualMap.get(message.id());
             assertEquals(message, actualMessage, providedMessage);
         }
-    }
-
-    public enum DataSource {
-        H2,
-        MYSQL,
-        POSTGRES,
     }
 }

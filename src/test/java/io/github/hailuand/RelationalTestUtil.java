@@ -29,31 +29,8 @@ import org.h2.api.ErrorCode;
 import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException;
 import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
-import org.testcontainers.containers.JdbcDatabaseContainer;
-import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 public final class RelationalTestUtil {
-    private static final JdbcDatabaseContainer<?> postgres;
-    private static final JdbcDatabaseContainer<?> mySql;
-
-    static {
-        postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres").withTag("16.2"));
-        mySql = new MySQLContainer<>(DockerImageName.parse("mysql").withTag("8.3.0"))
-                .withUsername("root")
-                .withPassword("")
-                .withEnv("MYSQL_ROOT_HOST", "%");
-    }
-
-    public static JdbcDatabaseContainer<?> postgresContainer() {
-        return postgres;
-    }
-
-    public static JdbcDatabaseContainer<?> mySQLContainer() {
-        return mySql;
-    }
-
     public static void assertH2PrimaryKeyViolation(SQLException exception) {
         assertNotNull(exception.getNextException());
         var h2Exception = exception.getNextException();
