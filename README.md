@@ -40,6 +40,7 @@ RDBMS in this list have been tested for library compatability and are included i
 | MySQL       | ✅      |
 | Postgres    | ✅      |
 | CockroachDB | ✅      |
+| DB2         | 🧪     |
 
 ---
 
