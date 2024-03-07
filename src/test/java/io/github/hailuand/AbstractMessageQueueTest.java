@@ -33,14 +33,15 @@ import net.datafaker.Faker;
 import org.junit.jupiter.api.Assertions;
 
 public abstract class AbstractMessageQueueTest extends DbmsTest {
-    protected static final String QUEUE_NAME = "Test_Queue";
     private static final Faker faker = new Faker();
     protected MessageQueue messageQueue;
+    protected String queueName;
 
     @Override
     protected void configure(DataSource dataSource) throws SQLException {
         super.configure(dataSource);
-        this.mqConfig = MessageQueueConfig.of(QUEUE_NAME);
+        this.queueName = "TestQueue_%s".formatted(System.currentTimeMillis());
+        this.mqConfig = MessageQueueConfig.of(queueName);
         this.messageQueue = MessageQueue.of(this.mqConfig);
         this.messageQueue.createTableWithSchemaIfNotExists(getConnection());
     }
