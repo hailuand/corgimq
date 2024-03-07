@@ -58,14 +58,9 @@ public abstract class DbmsTest {
     private static final JdbcDatabaseContainer<?> cockroachDb = new CockroachContainer(
             DockerImageName.parse("cockroachdb/cockroach").withTag("v23.1.16"));
 
-    @Container
-    private static final JdbcDatabaseContainer<?> db2 =
-            new Db2Container(DockerImageName.parse("icr.io/db2_community/db2")).acceptLicense();
-
     protected void configure(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
         switch (dataSource) {
             case COCKROACHDB -> this.jdbcContainer = cockroachDb;
-            case DB2 -> this.jdbcContainer = db2;
             case POSTGRES -> this.jdbcContainer = postgres;
             case MYSQL -> this.jdbcContainer = mySql;
         }
@@ -97,14 +92,14 @@ public abstract class DbmsTest {
     protected String getUserName(AbstractMessageQueueTest.DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_USER_NAME;
-            case COCKROACHDB, DB2, MYSQL, POSTGRES -> this.jdbcContainer.getUsername();
+            case COCKROACHDB, MYSQL, POSTGRES -> this.jdbcContainer.getUsername();
         };
     }
 
     protected String getPassword(AbstractMessageQueueTest.DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_PASSWORD;
-            case COCKROACHDB, DB2, MYSQL, POSTGRES -> this.jdbcContainer.getPassword();
+            case COCKROACHDB, MYSQL, POSTGRES -> this.jdbcContainer.getPassword();
         };
     }
 
@@ -112,7 +107,7 @@ public abstract class DbmsTest {
         return switch (dataSource) {
             case H2 -> H2_JDBC_URL;
             case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
-            case COCKROACHDB, DB2, POSTGRES -> this.jdbcContainer.getJdbcUrl();
+            case COCKROACHDB, POSTGRES -> this.jdbcContainer.getJdbcUrl();
         };
     }
 
@@ -121,7 +116,7 @@ public abstract class DbmsTest {
         switch (dataSource) {
             case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
             case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
-            case COCKROACHDB, DB2, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
+            case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
             default -> fail("Not implemented: %s".formatted(dataSource.name()));
         }
     }
@@ -129,7 +124,6 @@ public abstract class DbmsTest {
     public enum DataSource {
         H2,
         COCKROACHDB,
-        DB2,
         MYSQL,
         POSTGRES,
     }

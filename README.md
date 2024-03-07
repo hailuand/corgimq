@@ -37,10 +37,10 @@ RDBMS in this list have been tested for library compatability and are included i
 | DBMS        | Status |
 |-------------|--------|
 | H2          | ✅      |
-| MySQL       | ✅      |
-| Postgres    | ✅      |
 | CockroachDB | ✅      |
 | DB2         | 🧪     |
+| MySQL       | ✅      |
+| Postgres    | ✅      |
 
 ---
 

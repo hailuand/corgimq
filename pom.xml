@@ -51,8 +51,6 @@
         <postgresql.version>42.7.2</postgresql.version>
         <!-- mysql -->
         <mysql.version>8.3.0</mysql.version>
-        <!-- db2 -->
-        <db2.version>11.5.9.0</db2.version>
         <!-- slf4j -->
         <slf4j.api.version>2.0.12</slf4j.api.version>
         <!-- log4j2 -->
@@ -115,14 +113,6 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>${mysql.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- DB2 -->
-        <dependency>
-            <groupId>com.ibm.db2</groupId>
-            <artifactId>jcc</artifactId>
-            <version>${db2.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -204,11 +194,6 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>db2</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
@@ -277,7 +262,6 @@
                             <failOnWarning>true</failOnWarning>
                             <ignoredUnusedDeclaredDependencies>
                                 <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
-                                <ignoredUnusedDeclaredDependency>com.ibm.db2:jcc</ignoredUnusedDeclaredDependency>
                             </ignoredUnusedDeclaredDependencies>
                         </configuration>
                     </execution>
