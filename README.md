@@ -1,6 +1,8 @@
 # Corgi Message Queue (CorgiMQ)
 
-[![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg)](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.hailuand/corgimq?color=blue)](https://central.sonatype.com/artifact/io.github.hailuand/corgimq) [![javadoc](https://javadoc.io/badge2/io.github.hailuand/corgimq/javadoc.svg)](https://javadoc.io/doc/io.github.hailuand/corgimq)
+![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg) ![codeql](https://github.com/hailuand/corgimq/actions/workflows/codeql.yaml/badge.svg) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/hailuand/corgimq/badge)](https://securityscorecards.dev/viewer/?uri=github.com/hailuand/corgimq)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.hailuand/corgimq?color=blue)](https://central.sonatype.com/artifact/io.github.hailuand/corgimq) [![javadoc](https://javadoc.io/badge2/io.github.hailuand/corgimq/javadoc.svg)](https://javadoc.io/doc/io.github.hailuand/corgimq)
 
 ![mascot.jpg](mascot.jpg)
 
@@ -10,17 +12,17 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 ---
 
 ### Features
-- Lightweight: bring **just your DBMS.** 🚀
-- Batteries included: sensible out-of-the-box defaults with a few optional knobs to get you dangerous _fast_. 🔋
-- Transactional: shared access of JDBC `Connection` available to provide transactional message handling. 🤝
-- Auditable: audit information in the queue captures if, when, and who has read a message. 🔎
+- Lightweight: bring **just your DBMS.** :rocket:
+- Batteries included: sensible out-of-the-box defaults with a few optional knobs to get you dangerous _fast_. :battery:
+- Transactional: shared access of JDBC `Connection` available to provide transactional message handling. :handshake:
+- Auditable: audit information in the queue captures if, when, and who has read a message. :detective:
 - Guaranteed **exactly-once delivery** of a message to a reader - if someone's currently reading it, no one else receives it.
 - Messages remain in queue until removed.
 
 ---
 
 ### Index
-* [DBMS compatability & testing](#dbms-compatability)
+* [Compatability](#compatability)
 * [Get started](#get-started)
   * [Creating a queue](#creating-a-queue)
   * [Pushing messages](#pushing-messages)
@@ -31,16 +33,24 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 
 ---
 
-### DBMS compatability
+### Compatability
+
+#### Java
+| CorgiMQ Version | JDK |
+|-----------------|-----|
+| `0.1.x+`        | 21  |
+
+
+#### RDMS
 RDBMS in this list have been tested for library compatability and are included in the test suites.
 
-| DBMS        | Status |
-|-------------|--------|
-| H2          | ✅      |
-| CockroachDB | ✅      |
-| DB2         | 🧪     |
-| MySQL       | ✅      |
-| Postgres    | ✅      |
+| DBMS        | Status             |
+|-------------|--------------------|
+| H2          | :white_check_mark: |
+| CockroachDB | :white_check_mark: |
+| DB2         | :test_tube:        |
+| MySQL       | :white_check_mark: |
+| Postgres    | :white_check_mark: |
 
 ---
 
