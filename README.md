@@ -1,10 +1,14 @@
 # Corgi Message Queue (CorgiMQ)
 
-![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg) ![codeql](https://github.com/hailuand/corgimq/actions/workflows/codeql.yaml/badge.svg) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/hailuand/corgimq/badge)](https://securityscorecards.dev/viewer/?uri=github.com/hailuand/corgimq)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.hailuand/corgimq?color=blue)](https://central.sonatype.com/artifact/io.github.hailuand/corgimq) [![javadoc](https://javadoc.io/badge2/io.github.hailuand/corgimq/javadoc.svg)](https://javadoc.io/doc/io.github.hailuand/corgimq)
-
 ![mascot.jpg](mascot.jpg)
+
+| Workflow     | Status                                                                                                                                                                                                                                                               |
+|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Build & test | ![build](https://github.com/hailuand/corgio-mq/actions/workflows/maven.yaml/badge.svg) [![codecov](https://codecov.io/github/hailuand/corgimq/graph/badge.svg?token=NYQYU42L1U)](https://codecov.io/github/hailuand/corgimq)                                         |
+| Quality      | [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/hailuand/corgimq/badge)](https://securityscorecards.dev/viewer/?uri=github.com/hailuand/corgimq) ![codeql](https://github.com/hailuand/corgimq/actions/workflows/codeql.yaml/badge.svg) |
+| Packages     | [![Maven Central Version](https://img.shields.io/maven-central/v/io.github.hailuand/corgimq?color=blue)](https://central.sonatype.com/artifact/io.github.hailuand/corgimq)                                                                                           |
+| Docs         | [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)  [![javadoc](https://javadoc.io/badge2/io.github.hailuand/corgimq/javadoc.svg)](https://javadoc.io/doc/io.github.hailuand/corgimq)                |
+
 
 A lightweight message queue library built using Java's JDBC API. Similar in spirit to [AWS SQS](https://aws.amazon.com/sqs/)
 and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely on top of your DBMS.
@@ -37,8 +41,8 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 
 #### Java
 | CorgiMQ Version | JDK |
-|-----------------|-----|
-| `0.1.x+`        | 21  |
+|---------------|-----|
+| `0.1+`        | 21  |
 
 
 #### RDMS
