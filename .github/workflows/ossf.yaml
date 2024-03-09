@@ -3,8 +3,6 @@ on:
   schedule:
     - cron: '00 12 * * 1'
   push:
-    branches: [ "**" ]
-  pull_request:
     branches: [ "main" ]
 
 # Declare default permissions as read only.
