@@ -74,6 +74,7 @@ public abstract class DbmsTest {
             hikariConfig.setPassword(this.getPassword(dataSource));
             hikariConfig.setPoolName("CorgiMQ Test Pool");
             hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(2));
+            hikariConfig.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
             this.hikariDataSource = new HikariDataSource(hikariConfig);
             this.allSetUp = true;
         }
