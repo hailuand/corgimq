@@ -40,10 +40,12 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     @Override
     protected void configure(DataSource dataSource) throws SQLException {
         super.configure(dataSource);
-        this.queueName = "TestQueue_%s".formatted(System.currentTimeMillis());
+        this.queueName = "TestQueue_%s".formatted(faker.random().hex());
         this.mqConfig = MessageQueueConfig.of(queueName);
         this.messageQueue = MessageQueue.of(this.mqConfig);
-        this.messageQueue.createTableWithSchemaIfNotExists(getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.createTableWithSchemaIfNotExists(conn);
+        }
     }
 
     protected void assertTableRowCount(int expectedRowCount) throws SQLException {

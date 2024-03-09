@@ -33,7 +33,7 @@ import org.slf4j.MDC;
 
 /**
  * Interface for managing a message queue in a DBMS. Allows for the creation of a queue,
- * and pushing + popping of {@link Message}s directly.
+ * and pushing + popping of a {@link Message} directly.
  * See {@link MessageHandler} for how to encapsulate reading and processing messages.
  */
 public class MessageQueue {
@@ -86,7 +86,7 @@ public class MessageQueue {
 
     /**
      * Pushes {@link Message}s to the queue.
-     * @param messages {@link Message}s to push
+     * @param messages Collection of {@link Message} to push
      * @param conn {@link Connection} to database
      * @throws SQLException if database-level exception occurs while pushing messages
      */
@@ -119,7 +119,7 @@ public class MessageQueue {
     /**
      * Pops {@link Message}s from the queue, causing them to no longer be received by any readers.
      * 'Pop' means to mark the messages as processed, not their physical removal.
-     * @param messages {@link Message}s to mark read.
+     * @param messages Collection of {@link Message} to mark read.
      * @param conn {@link Connection} to database
      * @throws SQLException If a database-level exception occurs while popping
      */
@@ -149,7 +149,7 @@ public class MessageQueue {
      * the {@link Message}s audit metadata being updated.
      * @param numMessages Maximum number of messages to read from the queue.
      * @param conn {@link Connection} to database
-     * @return Available {@link Message}s
+     * @return Available {@link Message} in queue
      * @throws SQLException If a database-level exception occurs during read.
      */
     public List<Message> read(int numMessages, Connection conn) throws SQLException {

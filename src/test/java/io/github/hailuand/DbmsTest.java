@@ -27,6 +27,7 @@ import io.github.hailuand.corgi.mq.MessageQueue;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 import org.testcontainers.containers.*;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,6 +43,8 @@ public abstract class DbmsTest {
     private JdbcDatabaseContainer<?> jdbcContainer;
     protected MessageQueueConfig mqConfig;
     private HikariDataSource hikariDataSource;
+
+    private boolean allSetUp = false;
 
     @Container
     private static final JdbcDatabaseContainer<?> postgres =
@@ -64,12 +67,16 @@ public abstract class DbmsTest {
             case POSTGRES -> this.jdbcContainer = postgres;
             case MYSQL -> this.jdbcContainer = mySql;
         }
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
-        hikariConfig.setUsername(this.getUserName(dataSource));
-        hikariConfig.setPassword(this.getPassword(dataSource));
-        hikariConfig.setPoolName("CorgiMQ Test Pool");
-        this.hikariDataSource = new HikariDataSource(hikariConfig);
+        if (!this.allSetUp) {
+            HikariConfig hikariConfig = new HikariConfig();
+            hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
+            hikariConfig.setUsername(this.getUserName(dataSource));
+            hikariConfig.setPassword(this.getPassword(dataSource));
+            hikariConfig.setPoolName("CorgiMQ Test Pool");
+            hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(2));
+            this.hikariDataSource = new HikariDataSource(hikariConfig);
+            this.allSetUp = true;
+        }
     }
 
     protected Connection getConnection() throws SQLException {
@@ -86,7 +93,6 @@ public abstract class DbmsTest {
                 default -> fail("Not implemented: %s".formatted(dataSource.name()));
             }
         }
-        this.hikariDataSource.close();
     }
 
     protected String getUserName(AbstractMessageQueueTest.DataSource dataSource) {

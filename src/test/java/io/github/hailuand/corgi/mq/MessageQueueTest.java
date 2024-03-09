@@ -48,10 +48,14 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         configure(dataSource);
         assertTableRowCount(0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages, this.getConnection());
-        assertTableRowCount(messages.size());
-        var pending = this.messageQueue.read(10, this.getConnection());
-        assertMessages(messages, pending);
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+            assertTableRowCount(messages.size());
+        }
+        try (var conn = this.getConnection()) {
+            var pending = this.messageQueue.read(10, conn);
+            assertMessages(messages, pending);
+        }
         tearDown(dataSource);
     }
 
@@ -60,15 +64,20 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testPopAndRead(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         assertTableRowCount(messages.size());
-        var pending = this.messageQueue.read(10, this.getConnection());
-        assertMessages(messages, pending);
+        try (var conn = this.getConnection()) {
+            var pending = this.messageQueue.read(10, conn);
+            assertMessages(messages, pending);
+        }
         // Pop in another txn
-        this.messageQueue.pop(messages, this.getConnection());
-        var pendingPostPop = this.messageQueue.read(10, this.getConnection());
-        Assertions.assertTrue(pendingPostPop.isEmpty());
-
+        try (var conn = this.getConnection()) {
+            this.messageQueue.pop(messages, conn);
+            var pendingPostPop = this.messageQueue.read(10, conn);
+            Assertions.assertTrue(pendingPostPop.isEmpty());
+        }
         // assert in separate txn
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
@@ -96,15 +105,19 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testWriteDupes(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage());
-        this.messageQueue.push(messages, this.getConnection());
-        assertThrows(SQLException.class, () -> {
-            try {
-                this.messageQueue.push(messages, this.getConnection());
-            } catch (SQLException e) {
-                assertUniquePrimaryKeyViolation(dataSource, e);
-                throw e;
-            }
-        });
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
+        try (var conn = this.getConnection()) {
+            assertThrows(SQLException.class, () -> {
+                try {
+                    this.messageQueue.push(messages, conn);
+                } catch (SQLException e) {
+                    assertUniquePrimaryKeyViolation(dataSource, e);
+                    throw e;
+                }
+            });
+        }
         tearDown(dataSource);
     }
 
@@ -112,9 +125,13 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testPushNothing(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        Assertions.assertTrue(this.messageQueue.read(10, this.getConnection()).isEmpty());
-        this.messageQueue.push(Collections.emptyList(), this.getConnection());
-        Assertions.assertTrue(this.messageQueue.read(10, this.getConnection()).isEmpty());
+        try (var conn = this.getConnection()) {
+            Assertions.assertTrue(this.messageQueue.read(10, conn).isEmpty());
+            this.messageQueue.push(Collections.emptyList(), conn);
+        }
+        try (var conn = this.getConnection()) {
+            Assertions.assertTrue(this.messageQueue.read(10, conn).isEmpty());
+        }
         tearDown(dataSource);
     }
 
@@ -150,7 +167,9 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 throw new RuntimeException(e);
                             }
                         });
-        assertMessages(this.messageQueue.read(10, this.getConnection()), messages);
+        try (var conn = this.getConnection()) {
+            assertMessages(messages, this.messageQueue.read(10, conn));
+        }
         tearDown(dataSource);
     }
 
@@ -188,10 +207,10 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 throw new RuntimeException(e);
                             }
                         }));
-        assertMessages(
-                this.messageQueue.read(10, this.getConnection()),
-                Collections.emptyList(),
-                "failed txn changes not committed");
+        try (var conn = this.getConnection()) {
+            assertMessages(
+                    this.messageQueue.read(10, conn), Collections.emptyList(), "failed txn changes not committed");
+        }
         tearDown(dataSource);
     }
 
@@ -200,13 +219,19 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testReadAuditMetadataUpdated(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = createMessages(5);
-        this.messageQueue.push(messages, this.getConnection());
-        var result = this.messageQueue.read(10, this.getConnection());
-        assertMessages(messages, result);
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
+        try (var conn = this.getConnection()) {
+            var result = this.messageQueue.read(10, conn);
+            assertMessages(messages, result);
+        }
         int expectedReadCount = 1;
         assertAuditMetadata(messages, expectedReadCount);
-        this.messageQueue.read(10, this.getConnection());
-        assertAuditMetadata(messages, expectedReadCount + 1);
+        try (var conn = this.getConnection()) {
+            this.messageQueue.read(10, conn);
+            assertAuditMetadata(messages, expectedReadCount + 1);
+        }
         tearDown(dataSource);
     }
 

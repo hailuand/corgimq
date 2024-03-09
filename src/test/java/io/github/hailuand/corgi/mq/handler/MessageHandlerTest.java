@@ -50,7 +50,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         configure(dataSource);
         var defaultHandler = MessageHandler.of(this.messageQueue);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         var handled = new ArrayList<Message>();
         assertMessagesInTable(messages, false);
         defaultHandler.listen(
@@ -88,7 +90,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     public void testHandleNoMessages(DataSource dataSource) throws SQLException {
         configure(dataSource);
         assertTableRowCount(0);
-        this.messageQueue.push(Collections.emptyList(), this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(Collections.emptyList(), conn);
+        }
         assertTableRowCount(0);
         tearDown(dataSource);
     }
@@ -100,7 +104,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages, getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         var handled = new ArrayList<Message>();
         var dml = """
                INSERT INTO "%s"."%s" VALUES
@@ -156,7 +162,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         var dml = """
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
@@ -200,7 +208,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         assertThrows(
                 RuntimeException.class,
                 () -> this.messageHandler.listen(
@@ -230,7 +240,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         configure(dataSource);
         var messages = createMessages(10);
         int batchSize = 4;
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(batchSize));
         var msgsMap = messages.stream().collect(Collectors.toMap(Message::id, Function.identity()));
         var processed = new ArrayList<Message>();
@@ -271,7 +283,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var processing = new ArrayList<Message>();
         processing.add(messages.get(0));
         processing.add(messages.get(1));
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         this.messageHandler.listen(
                 () -> {
                     try {
@@ -297,7 +311,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         configure(dataSource);
         var messages = createMessages(10);
         var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(3));
-        this.messageQueue.push(messages, this.getConnection());
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        }
         var threadMessages1 = new HashSet<Message>();
         var threadMessages2 = new HashSet<Message>();
         Thread t1 = new Thread(() -> {
