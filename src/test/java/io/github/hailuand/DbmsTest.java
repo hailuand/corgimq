@@ -44,8 +44,6 @@ public abstract class DbmsTest {
     protected MessageQueueConfig mqConfig;
     private HikariDataSource hikariDataSource;
 
-    private boolean allSetUp = false;
-
     @Container
     private static final JdbcDatabaseContainer<?> postgres =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres").withTag("16.2"));
@@ -67,17 +65,13 @@ public abstract class DbmsTest {
             case POSTGRES -> this.jdbcContainer = postgres;
             case MYSQL -> this.jdbcContainer = mySql;
         }
-        if (!this.allSetUp) {
-            HikariConfig hikariConfig = new HikariConfig();
-            hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
-            hikariConfig.setUsername(this.getUserName(dataSource));
-            hikariConfig.setPassword(this.getPassword(dataSource));
-            hikariConfig.setPoolName("CorgiMQ Test Pool");
-            hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(2));
-            hikariConfig.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
-            this.hikariDataSource = new HikariDataSource(hikariConfig);
-            this.allSetUp = true;
-        }
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
+        hikariConfig.setUsername(this.getUserName(dataSource));
+        hikariConfig.setPassword(this.getPassword(dataSource));
+        hikariConfig.setPoolName("CorgiMQ Test Pool");
+        hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(2));
+        this.hikariDataSource = new HikariDataSource(hikariConfig);
     }
 
     protected Connection getConnection() throws SQLException {
@@ -94,6 +88,7 @@ public abstract class DbmsTest {
                 default -> fail("Not implemented: %s".formatted(dataSource.name()));
             }
         }
+        this.hikariDataSource.close();
     }
 
     protected String getUserName(AbstractMessageQueueTest.DataSource dataSource) {
