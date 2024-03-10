@@ -219,6 +219,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             this.messageQueue.push(messages, conn);
         }
+        sleepJitterForTransactionPropagation(dataSource);
         assertThrows(
                 RuntimeException.class,
                 () -> this.messageHandler.listen(
