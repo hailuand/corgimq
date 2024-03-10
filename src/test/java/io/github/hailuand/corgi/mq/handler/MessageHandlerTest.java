@@ -32,9 +32,13 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("SqlDialectInspection")
 public class MessageHandlerTest extends AbstractMessageQueueTest {
+    private static final Logger logger = LoggerFactory.getLogger(MessageHandlerTest.class.getName());
+
     private static final int MAX_MESSAGES = 15;
     private MessageHandler messageHandler;
 
@@ -100,6 +104,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     @ParameterizedTest
     @EnumSource(DataSource.class)
     public void testHandleInTransaction(DataSource dataSource) throws SQLException {
+        logger.warn("Running testHandleInTransaction for {}", dataSource.name());
         configure(dataSource);
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
@@ -158,6 +163,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     @ParameterizedTest
     @EnumSource(DataSource.class)
     public void testHandleInTransactionFailed(DataSource dataSource) throws SQLException {
+        logger.warn("Running testHandleInTransactionFailed for {}", dataSource.name());
         configure(dataSource);
         String secondaryTableName = "handler_results";
         createSecondaryTable(secondaryTableName);
