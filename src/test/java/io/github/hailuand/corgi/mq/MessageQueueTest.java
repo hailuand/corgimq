@@ -139,6 +139,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testPushTransaction(DataSource dataSource) throws SQLException {
         configure(dataSource);
+        System.out.printf("Running testPushTransaction for %s%n", dataSource.name());
         String secondaryTableName = "varieties";
         createSecondaryTable(secondaryTableName);
         var messages = List.of(createMessage(), createMessage());
@@ -177,6 +178,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testPushTransactionFails(DataSource dataSource) throws SQLException {
         configure(dataSource);
+        System.out.printf("Running testPushTransactionFails for %s%n", dataSource.name());
         String secondaryTableName = "varieties";
         createSecondaryTable(secondaryTableName);
         assertThrows(RuntimeException.class, () -> new TransactionManager()
@@ -209,7 +211,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                         }));
         try (var conn = this.getConnection()) {
             assertMessages(
-                    this.messageQueue.read(10, conn), Collections.emptyList(), "failed txn changes not committed");
+                    Collections.emptyList(), this.messageQueue.read(10, conn), "failed txn changes not committed");
         }
         tearDown(dataSource);
     }
