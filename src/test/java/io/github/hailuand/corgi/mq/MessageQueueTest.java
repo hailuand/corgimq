@@ -52,10 +52,8 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         configure(dataSource);
         assertTableRowCount(0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        try (var conn = this.getConnection()) {
-            this.messageQueue.push(messages, conn);
-            assertTableRowCount(messages.size());
-        }
+        push(dataSource, messages);
+        assertTableRowCount(messages.size());
         try (var conn = this.getConnection()) {
             var pending = this.messageQueue.read(10, conn);
             assertMessages(messages, pending);
@@ -68,17 +66,15 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testPopAndRead(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage(), createMessage());
-        try (var conn = this.getConnection()) {
-            this.messageQueue.push(messages, conn);
-        }
+        push(dataSource, messages);
         assertTableRowCount(messages.size());
         try (var conn = this.getConnection()) {
             var pending = this.messageQueue.read(10, conn);
             assertMessages(messages, pending);
         }
         // Pop in another txn
+        pop(dataSource, messages);
         try (var conn = this.getConnection()) {
-            this.messageQueue.pop(messages, conn);
             var pendingPostPop = this.messageQueue.read(10, conn);
             Assertions.assertTrue(pendingPostPop.isEmpty());
         }
@@ -109,9 +105,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testWriteDupes(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage());
-        try (var conn = this.getConnection()) {
-            this.messageQueue.push(messages, conn);
-        }
+        push(dataSource, messages);
         try (var conn = this.getConnection()) {
             assertThrows(SQLException.class, () -> {
                 try {
@@ -131,8 +125,8 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         configure(dataSource);
         try (var conn = this.getConnection()) {
             Assertions.assertTrue(this.messageQueue.read(10, conn).isEmpty());
-            this.messageQueue.push(Collections.emptyList(), conn);
         }
+        push(dataSource, Collections.emptyList());
         try (var conn = this.getConnection()) {
             Assertions.assertTrue(this.messageQueue.read(10, conn).isEmpty());
         }
@@ -227,9 +221,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testReadAuditMetadataUpdated(DataSource dataSource) throws SQLException {
         configure(dataSource);
         var messages = createMessages(5);
-        try (var conn = this.getConnection()) {
-            this.messageQueue.push(messages, conn);
-        }
+        push(dataSource, messages);
         try (var conn = this.getConnection()) {
             var result = this.messageQueue.read(10, conn);
             assertMessages(messages, result);
