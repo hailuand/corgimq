@@ -172,6 +172,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 throw new RuntimeException(e);
                             }
                         });
+        sleepJitterForTransactionPropagation(dataSource);
         try (var conn = this.getConnection()) {
             assertMessages(messages, this.messageQueue.read(10, conn));
         }
@@ -213,6 +214,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 throw new RuntimeException(e);
                             }
                         }));
+        sleepJitterForTransactionPropagation(dataSource);
         try (var conn = this.getConnection()) {
             assertMessages(
                     Collections.emptyList(), this.messageQueue.read(10, conn), "failed txn changes not committed");

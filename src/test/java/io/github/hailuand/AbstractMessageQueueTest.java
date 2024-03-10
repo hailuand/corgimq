@@ -110,4 +110,16 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
             assertEquals(message, actualMessage, providedMessage);
         }
     }
+
+    protected void sleepJitterForTransactionPropagation(DataSource dataSource) {
+        switch (dataSource) {
+            case COCKROACHDB -> {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
 }

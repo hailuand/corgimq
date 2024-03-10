@@ -143,6 +143,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     }
                     return handled;
                 });
+        sleepJitterForTransactionPropagation(dataSource);
         assertMessagesInTable(messages, true);
         // assert results of other txn
         try (var conn = this.getConnection();
@@ -203,6 +204,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                             }
                             return handled;
                         }));
+        sleepJitterForTransactionPropagation(dataSource);
         assertMessagesInTable(messages, false); // no messages popped
         tearDown(dataSource);
     }
