@@ -141,10 +141,12 @@ Maximum number of `Message`s to serve to a `MessageHandler` in a single batch.
 _Default:_ `10`
 
 ### ✏️ Notes
+#### Locking
 A `Message` currently being read by a `MessageHandler` has its row locked until the function completes. If multiple
 `MessageHandler`s are operating on the same queue, locked rows are skipped to prevent the same message being received
-by different handlers.
+by different handlers. This is achieved using the RDBMS's `SELECT FOR UPDATE` command.
 
+#### Transactional message handling
 The transaction's `Connection` can be accessed through the `MessageHandlerBatch` argument passed to the
 `Function`'s input:
 ```java
@@ -159,6 +161,15 @@ messageHandler.listen(connectionSupplier, messageHandlerBatch -> {
     
     return messageBatch.messages();
     });
+```
+
+#### Quote identifiers
+The library double quote `"` identifiers for database objects. MySQL server uses the backtick `` ` `` character by default 
+as an identifier. For compatability with the library, set the`sql_mode` session parameter to `ANSI_QUOTES` on the JDBC url when creating connections:
+
+```java
+String jdbcUrl = "jdbc:mysql://localhost:56181/test?sessionVariables=sql_mode=ANSI_QUOTES";
+Connection connection = DriverManager.getConnection(jdbcUrl);
 ```
 
 ---
