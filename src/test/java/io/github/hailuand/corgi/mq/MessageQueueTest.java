@@ -32,11 +32,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MessageQueueTest extends AbstractMessageQueueTest {
-    private static final Logger logger = LoggerFactory.getLogger(MessageQueueTest.class.getName());
 
     @ParameterizedTest
     @EnumSource(DataSource.class)
@@ -137,7 +134,6 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testPushTransaction(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        logger.warn("Running testPushTransaction {}", dataSource.name());
         String secondaryTableName = "varieties";
         createSecondaryTable(secondaryTableName);
         var messages = List.of(createMessage(), createMessage());
@@ -177,7 +173,6 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testPushTransactionFails(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        logger.warn("Running testPushTransactionFails for {}", dataSource.name());
         String secondaryTableName = "varieties";
         createSecondaryTable(secondaryTableName);
         assertThrows(RuntimeException.class, () -> new TransactionManager()
