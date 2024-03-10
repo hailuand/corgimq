@@ -97,6 +97,24 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
         }
     }
 
+    protected void push(DataSource dataSource, List<Message> messages) {
+        try (var conn = this.getConnection()) {
+            this.messageQueue.push(messages, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        this.sleepJitterForTransactionPropagation(dataSource);
+    }
+
+    protected void pop(DataSource dataSource, List<Message> messages) {
+        try (var conn = this.getConnection()) {
+            this.messageQueue.pop(messages, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        this.sleepJitterForTransactionPropagation(dataSource);
+    }
+
     protected void assertMessages(List<Message> expected, List<Message> actual) {
         assertMessages(expected, actual, null);
     }
@@ -108,6 +126,22 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
         for (var message : expected) {
             var actualMessage = actualMap.get(message.id());
             assertEquals(message, actualMessage, providedMessage);
+        }
+    }
+
+    protected void sleepJitterForTransactionPropagation(DataSource dataSource) {
+        switch (dataSource) {
+            case COCKROACHDB -> {
+                /*
+                CockroachDB operates on consensus protocol - querying 1ms after committing txn may result in
+                undesired but not incorrect behavior as rows may still be locked
+                 */
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 }
