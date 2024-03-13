@@ -52,7 +52,6 @@ RDBMS in this list have been tested for library compatability and are included i
 |-------------|--------------------|
 | H2          | :white_check_mark: |
 | CockroachDB | :white_check_mark: |
-| DB2         | :test_tube:        |
 | MySQL       | :white_check_mark: |
 | Postgres    | :white_check_mark: |
 
