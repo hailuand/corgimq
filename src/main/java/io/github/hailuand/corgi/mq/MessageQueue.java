@@ -66,12 +66,12 @@ public class MessageQueue {
         var ddl =
                 """
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
-                    "id" VARCHAR(36) PRIMARY KEY,
-                    "read_by" VARCHAR(16),
-                    "data" TEXT NOT NULL,
+                    "read_count" INTEGER DEFAULT 0 NOT NULL,
                     "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
                     "processing_time" TIMESTAMP,
-                    "read_count" INTEGER DEFAULT 0 NOT NULL
+                    "id" VARCHAR(36) PRIMARY KEY,
+                    "read_by" VARCHAR(16),
+                    "data" TEXT NOT NULL
                 );
                 """
                         .formatted(this.tableSchemaName(), this.queueTableName());
