@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Encapsulates the reading, processing, and popping of {@link Message}s from a {@link MessageQueue}.
+ * Encapsulates the reading, processing, and popping of {@link Message} from a {@link MessageQueue}.
  */
 public class MessageHandler {
     private static final Logger logger = LoggerFactory.getLogger(MessageHandler.class);
@@ -64,7 +64,7 @@ public class MessageHandler {
 
     /**
      * Reads, applies function, and pops messages from the queue all in transaction. Messages being read
-     * are row-locked, and won't be visible to other {@link MessageHandler}s.
+     * are row-locked, and won't be visible to other {@link MessageHandler}.
      * @param connectionProvider Implementation to provide a new connection for transaction
      * @param handlerFunction Function to apply to read messages
      * @throws SQLException If an exception occurs during transaction

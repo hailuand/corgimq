@@ -67,11 +67,11 @@ public class MessageQueue {
                 """
                 CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" VARCHAR(36) PRIMARY KEY,
+                    "read_by" VARCHAR(16),
                     "data" TEXT NOT NULL,
                     "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                    "read_count" INTEGER DEFAULT 0 NOT NULL,
-                    "read_by" VARCHAR(16),
-                    "processing_time" TIMESTAMP
+                    "processing_time" TIMESTAMP,
+                    "read_count" INTEGER DEFAULT 0 NOT NULL
                 );
                 """
                         .formatted(this.tableSchemaName(), this.queueTableName());
@@ -85,7 +85,7 @@ public class MessageQueue {
     }
 
     /**
-     * Pushes {@link Message}s to the queue.
+     * Pushes {@link Message} to the queue.
      * @param messages Collection of {@link Message} to push
      * @param conn {@link Connection} to database
      * @throws SQLException if database-level exception occurs while pushing messages
@@ -117,7 +117,7 @@ public class MessageQueue {
     }
 
     /**
-     * Pops {@link Message}s from the queue, causing them to no longer be received by any readers.
+     * Pops {@link Message} from the queue, causing them to no longer be received by any readers.
      * 'Pop' means to mark the messages as processed, not their physical removal.
      * @param messages Collection of {@link Message} to mark read.
      * @param conn {@link Connection} to database
@@ -145,8 +145,8 @@ public class MessageQueue {
     }
 
     /**
-     * Reads {@code numMessages} of {@link Message}s from the queue, ordered by message time. Results in
-     * the {@link Message}s audit metadata being updated.
+     * Reads {@code numMessages} of {@link Message} from the queue, ordered by message time. Results in
+     * the {@link Message} audit metadata being updated.
      * @param numMessages Maximum number of messages to read from the queue.
      * @param conn {@link Connection} to database
      * @return Available {@link Message} in queue
