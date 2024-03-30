@@ -62,7 +62,8 @@ RDBMS in this list have been tested for library compatability and are included i
 A message queue is managed by an instance of `MessageQueue`.
 
 ```java
-MessageQueue messageQueue = MessageQueue.of(MessageQueueConfig.of("poneglyphs")); // Name of queue, table will have '_q' suffix
+Connection conn = // ...
+MessageQueue messageQueue = MessageQueue.of(MessageQueueConfig.of("poneglyphs"), conn); // Name of queue, table will have '_q' suffix
 messageQueue.createTableWithSchemaIfNotExists();
 ```
 
@@ -160,15 +161,6 @@ messageHandler.listen(connectionSupplier, messageHandlerBatch -> {
     
     return messageBatch.messages();
     });
-```
-
-#### Quote identifiers
-The library double quote `"` identifiers for database objects. MySQL server uses the backtick `` ` `` character by default 
-as an identifier. For compatability with the library, set the`sql_mode` session parameter to `ANSI_QUOTES` on the JDBC url when creating connections:
-
-```java
-String jdbcUrl = "jdbc:mysql://localhost:56181/test?sessionVariables=sql_mode=ANSI_QUOTES";
-Connection connection = DriverManager.getConnection(jdbcUrl);
 ```
 
 ---
