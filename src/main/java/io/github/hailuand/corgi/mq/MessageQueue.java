@@ -23,6 +23,7 @@ import io.github.hailuand.corgi.mq.handler.MessageHandler;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import io.github.hailuand.corgi.mq.sql.dialect.SqlDialect;
+import io.github.hailuand.corgi.mq.sql.dialect.SqlDialectFactory;
 import io.github.hailuand.corgi.mq.sql.dialect.StandardSqlDialect;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -47,7 +48,18 @@ public class MessageQueue {
     private final SqlDialect sqlDialect;
 
     /**
-     * Creates a new instance of a message queue.
+     * Creates a new instance of a message queue, inquiring the database to build the appropriate {@link SqlDialect}.
+     * @param messageQueueConfig Configuration to use for creating queue
+     * @param conn {@link Connection} to database
+     * @return New {@link MessageQueue} instance
+     * @throws SQLException If database connection unavailable
+     */
+    public static MessageQueue of(MessageQueueConfig messageQueueConfig, Connection conn) throws SQLException {
+        return new MessageQueue(messageQueueConfig, SqlDialectFactory.createSqlDialect(conn));
+    }
+
+    /**
+     * Creates a new instance of a message queue using the default {@link SqlDialect}.
      * @param messageQueueConfig Configuration to use for creating queue
      * @return New {@link MessageQueue} instance
      */
