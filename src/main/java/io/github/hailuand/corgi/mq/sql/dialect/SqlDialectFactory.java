@@ -23,7 +23,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class SqlDialectFactory {
-    public static SqlDialect createSqlDialect(Connection conn) throws SQLException {
+    public SqlDialect createSqlDialect(Connection conn) throws SQLException {
         String dbProduct = conn.getMetaData().getDatabaseProductName();
         return (dbProduct.equals("MySQL")) ? new MySqlDialect() : new StandardSqlDialect();
     }
