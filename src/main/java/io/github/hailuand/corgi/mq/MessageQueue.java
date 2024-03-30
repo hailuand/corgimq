@@ -22,6 +22,8 @@ package io.github.hailuand.corgi.mq;
 import io.github.hailuand.corgi.mq.handler.MessageHandler;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
+import io.github.hailuand.corgi.mq.sql.dialect.SqlDialect;
+import io.github.hailuand.corgi.mq.sql.dialect.SqlDialectFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,14 +44,18 @@ public class MessageQueue {
     public static final String SCHEMA_NAME = "mq";
 
     private final MessageQueueConfig messageQueueConfig;
+    private final SqlDialect sqlDialect;
 
     /**
-     * Creates a new instance of a message queue.
+     * Creates a new instance of a message queue, inquiring the database to build the appropriate {@link SqlDialect}.
      * @param messageQueueConfig Configuration to use for creating queue
+     * @param conn {@link Connection} to database
      * @return New {@link MessageQueue} instance
+     * @throws SQLException If database connection unavailable
      */
-    public static MessageQueue of(MessageQueueConfig messageQueueConfig) {
-        return new MessageQueue(messageQueueConfig);
+    public static MessageQueue of(MessageQueueConfig messageQueueConfig, Connection conn) throws SQLException {
+        var dialectFactory = new SqlDialectFactory();
+        return new MessageQueue(messageQueueConfig, dialectFactory.createSqlDialect(conn));
     }
 
     /**
@@ -59,22 +65,10 @@ public class MessageQueue {
      */
     public void createTableWithSchemaIfNotExists(Connection conn) throws SQLException {
         configureMDC();
-        var createSchemaDdl =
-                """
-                CREATE SCHEMA IF NOT EXISTS "%s";
-                """.formatted(SCHEMA_NAME);
-        var ddl =
-                """
-                CREATE TABLE IF NOT EXISTS "%s"."%s" (
-                    "read_count" INTEGER DEFAULT 0 NOT NULL,
-                    "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                    "processing_time" TIMESTAMP,
-                    "id" VARCHAR(36) PRIMARY KEY,
-                    "read_by" VARCHAR(16),
-                    "data" TEXT NOT NULL
-                );
-                """
-                        .formatted(this.tableSchemaName(), this.queueTableName());
+        var createSchemaDdl = this.sqlDialect.schemaDdl(this.tableSchemaName());
+        var ddl = this.sqlDialect
+                .tableDdl(this.tableSchemaName(), this.queueTableName())
+                .formatted(this.tableSchemaName(), this.queueTableName());
         try (var statement = conn.createStatement()) {
             logger.debug(createSchemaDdl);
             statement.execute(createSchemaDdl);
@@ -97,12 +91,7 @@ public class MessageQueue {
             return;
         }
 
-        var dml =
-                """
-                INSERT INTO "%s"."%s" ("id", "data")
-                VALUES (?, ?)
-                """
-                        .formatted(this.tableSchemaName(), this.queueTableName());
+        var dml = this.sqlDialect.pushMessagesDml(this.tableSchemaName(), this.queueTableName());
         logger.info("Pushing {} messages", messages.size());
         logger.debug(dml);
         try (var statement = conn.prepareStatement(dml)) {
@@ -125,13 +114,7 @@ public class MessageQueue {
      */
     public void pop(List<Message> messages, Connection conn) throws SQLException {
         configureMDC();
-        var dml =
-                """
-                    UPDATE "%s"."%s" SET "processing_time" = CURRENT_TIMESTAMP
-                    WHERE "id" = ?
-                    AND "processing_time" IS NULL
-                    """
-                        .formatted(this.tableSchemaName(), this.queueTableName());
+        var dml = this.sqlDialect.popMessagesDml(this.tableSchemaName(), this.queueTableName());
         logger.debug(dml);
         logger.info("Popping {} messages", messages.size());
         try (var statement = conn.prepareStatement(dml)) {
@@ -154,15 +137,7 @@ public class MessageQueue {
      */
     public List<Message> read(int numMessages, Connection conn) throws SQLException {
         configureMDC();
-        var sql =
-                """
-                SELECT * FROM "%s"."%s"
-                WHERE "processing_time" IS NULL
-                ORDER BY "message_time" ASC
-                LIMIT %d
-                FOR UPDATE SKIP LOCKED
-                """
-                        .formatted(this.tableSchemaName(), this.queueTableName(), numMessages);
+        var sql = this.sqlDialect.readMessagesDql(this.tableSchemaName(), this.queueTableName(), numMessages);
         logger.debug(sql);
         logger.info("Reading messages...");
         List<Message> pending = new ArrayList<>();
@@ -188,18 +163,13 @@ public class MessageQueue {
         return "%s_q".formatted(this.messageQueueConfig.queueName());
     }
 
-    private MessageQueue(MessageQueueConfig messageQueueConfig) {
+    private MessageQueue(MessageQueueConfig messageQueueConfig, SqlDialect sqlDialect) {
         this.messageQueueConfig = Objects.requireNonNull(messageQueueConfig);
+        this.sqlDialect = Objects.requireNonNull(sqlDialect);
     }
 
     private void markMessagesRead(List<Message> messages, Connection conn) throws SQLException {
-        var dml =
-                """
-                UPDATE "%s"."%s"
-                SET "read_count" = "read_count" + 1, "read_by" = CURRENT_USER
-                WHERE "id" = ?
-                """
-                        .formatted(this.tableSchemaName(), this.queueTableName());
+        var dml = this.sqlDialect.updateReadCountDml(this.tableSchemaName(), this.queueTableName());
         logger.debug(dml);
         try (var statement = conn.prepareStatement(dml)) {
             for (var message : messages) {

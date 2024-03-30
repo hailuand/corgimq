@@ -42,8 +42,8 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
         super.configure(dataSource);
         this.queueName = "TestQueue_%s".formatted(faker.random().hex());
         this.mqConfig = MessageQueueConfig.of(queueName);
-        this.messageQueue = MessageQueue.of(this.mqConfig);
         try (var conn = this.getConnection()) {
+            this.messageQueue = MessageQueue.of(this.mqConfig, conn);
             this.messageQueue.createTableWithSchemaIfNotExists(conn);
         }
     }
