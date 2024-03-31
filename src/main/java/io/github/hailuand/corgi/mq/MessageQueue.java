@@ -80,10 +80,9 @@ public class MessageQueue {
             rs.next();
             boolean indexNotCreated = rs.getInt("count") == 0;
             if (indexNotCreated) {
-                var createProcessingTimeIndexDdl =
-                        this.sqlDialect.indexDdl(this.tableSchemaName(), this.queueTableName());
-                logger.debug(createProcessingTimeIndexDdl);
-                statement.execute(createProcessingTimeIndexDdl);
+                var createIndexDdl = this.sqlDialect.indexDdl(this.tableSchemaName(), this.queueTableName());
+                logger.debug(createIndexDdl);
+                statement.execute(createIndexDdl);
             }
         }
         MDC.clear();

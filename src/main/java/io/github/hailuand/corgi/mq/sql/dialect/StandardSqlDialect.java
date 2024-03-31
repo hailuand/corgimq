@@ -53,7 +53,7 @@ public class StandardSqlDialect implements SqlDialect {
 
     @Override
     public String checkIndexExistenceDql(String schemaName, String tableName) {
-        return "SELECT COUNT(*) as count WHERE 1 = 0";
+        return "SELECT COUNT(*) as count WHERE 1 = 0"; // CREATE INDEX IF EXISTS used, so always safe to run
     }
 
     @Override

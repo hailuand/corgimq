@@ -43,7 +43,7 @@ public class MySqlDialect extends StandardSqlDialect {
     @Override
     public String checkIndexExistenceDql(String schemaName, String tableName) {
         return """
-                SELECT COUNT(*) as COUNT
+                SELECT COUNT(*) as count
                 FROM "INFORMATION_SCHEMA"."STATISTICS"
                 WHERE "table_schema" = '%s'
                 AND "table_name" = '%s'
