@@ -31,6 +31,28 @@ public class MySqlDialect extends StandardSqlDialect {
     }
 
     @Override
+    public String indexDdl(String schemaName, String tableName) {
+        return handleMySqlIdentifiers(
+                """
+                CREATE INDEX "%s"
+                ON "%s"."%s" ("processing_time")
+                """
+                        .formatted(getProcessingTimeIndexName(tableName), schemaName, tableName));
+    }
+
+    @Override
+    public String checkIndexExistenceDql(String schemaName, String tableName) {
+        return """
+                SELECT COUNT(*) as COUNT
+                FROM "INFORMATION_SCHEMA"."STATISTICS"
+                WHERE "table_schema" = '%s'
+                AND "table_name" = '%s'
+                AND "index_name" = '%s';
+                """
+                .formatted(schemaName, tableName, getProcessingTimeIndexName(tableName));
+    }
+
+    @Override
     public String pushMessagesDml(String schemaName, String tableName) {
         return handleMySqlIdentifiers(super.pushMessagesDml(schemaName, tableName));
     }

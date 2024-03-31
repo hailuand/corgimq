@@ -230,6 +230,16 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         tearDown(dataSource);
     }
 
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testCreateIndexIfNotExists(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        try (var conn = this.getConnection()) {
+            this.messageQueue.createTableWithSchemaIfNotExists(conn);
+        }
+        tearDown(dataSource);
+    }
+
     private void assertAuditMetadata(List<Message> expectedMessages, int expectedRowCount) throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {

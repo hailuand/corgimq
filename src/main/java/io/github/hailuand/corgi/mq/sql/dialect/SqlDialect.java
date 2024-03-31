@@ -24,6 +24,10 @@ public interface SqlDialect {
 
     String tableDdl(String schemaName, String tableName);
 
+    String indexDdl(String schemaName, String tableName);
+
+    String checkIndexExistenceDql(String schemaName, String tableName);
+
     String pushMessagesDml(String schemaName, String tableName);
 
     String popMessagesDml(String schemaName, String tableName);

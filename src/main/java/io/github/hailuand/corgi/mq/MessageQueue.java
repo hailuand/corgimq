@@ -66,14 +66,25 @@ public class MessageQueue {
     public void createTableWithSchemaIfNotExists(Connection conn) throws SQLException {
         configureMDC();
         var createSchemaDdl = this.sqlDialect.schemaDdl(this.tableSchemaName());
-        var ddl = this.sqlDialect
+        var createTableDdl = this.sqlDialect
                 .tableDdl(this.tableSchemaName(), this.queueTableName())
                 .formatted(this.tableSchemaName(), this.queueTableName());
         try (var statement = conn.createStatement()) {
             logger.debug(createSchemaDdl);
             statement.execute(createSchemaDdl);
-            logger.debug(ddl);
-            statement.execute(ddl);
+            logger.debug(createTableDdl);
+            statement.execute(createTableDdl);
+
+            var rs = statement.executeQuery(
+                    this.sqlDialect.checkIndexExistenceDql(this.tableSchemaName(), this.queueTableName()));
+            rs.next();
+            boolean indexNotCreated = rs.getInt("count") == 0;
+            if (indexNotCreated) {
+                var createProcessingTimeIndexDdl =
+                        this.sqlDialect.indexDdl(this.tableSchemaName(), this.queueTableName());
+                logger.debug(createProcessingTimeIndexDdl);
+                statement.execute(createProcessingTimeIndexDdl);
+            }
         }
         MDC.clear();
     }

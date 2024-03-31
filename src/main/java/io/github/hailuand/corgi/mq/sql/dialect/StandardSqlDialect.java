@@ -43,6 +43,20 @@ public class StandardSqlDialect implements SqlDialect {
     }
 
     @Override
+    public String indexDdl(String schemaName, String tableName) {
+        return """
+                CREATE INDEX IF NOT EXISTS "%s"
+                ON "%s"."%s" ("processing_time")
+                """
+                .formatted(getProcessingTimeIndexName(tableName), schemaName, tableName);
+    }
+
+    @Override
+    public String checkIndexExistenceDql(String schemaName, String tableName) {
+        return "SELECT COUNT(*) as count WHERE 1 = 0";
+    }
+
+    @Override
     public String pushMessagesDml(String schemaName, String tableName) {
         return """
                 INSERT INTO "%s"."%s" ("id", "data")
@@ -81,5 +95,9 @@ public class StandardSqlDialect implements SqlDialect {
                 FOR UPDATE SKIP LOCKED
                 """
                 .formatted(schemaName, tableName, numMessages);
+    }
+
+    protected String getProcessingTimeIndexName(String tableName) {
+        return "%s_processing_time_idx".formatted(tableName);
     }
 }
