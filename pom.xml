@@ -62,7 +62,7 @@
         <!-- datafaker -->
         <datafaker.version>2.1.0</datafaker.version>
         <!-- jacoco -->
-        <jacoco.version>0.8.11</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <!-- maven plugins -->
         <maven.dependency.plugin.version>3.6.1</maven.dependency.plugin.version>
         <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
