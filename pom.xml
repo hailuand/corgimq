@@ -50,7 +50,7 @@
         <!-- postgresql -->
         <postgresql.version>42.7.3</postgresql.version>
         <!-- mysql -->
-        <mysql.version>8.3.0</mysql.version>
+        <mysql.version>8.4.0</mysql.version>
         <!-- slf4j -->
         <slf4j.api.version>2.0.13</slf4j.api.version>
         <!-- log4j2 -->
