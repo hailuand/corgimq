@@ -40,7 +40,7 @@ public final class RelationalTestUtil {
 
     public static void assertMySQLPrimaryKeyViolation(SQLException sqlException) {
         assertInstanceOf(BatchUpdateException.class, sqlException);
-        assertEquals(MysqlErrorNumbers.SQL_STATE_INTEGRITY_CONSTRAINT_VIOLATION, sqlException.getSQLState());
+        assertEquals(MysqlErrorNumbers.SQLSTATE_INTEGRITY_CONSTRAINT_VIOLATION_NO_SUBCLASS, sqlException.getSQLState());
         assertNotNull(sqlException.getCause());
         assertInstanceOf(SQLIntegrityConstraintViolationException.class, sqlException.getCause());
     }
