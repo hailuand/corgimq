@@ -27,8 +27,8 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https//github.com/hailuand/corgimq.git</connection>
-        <developerConnection>scm:git:https://github.com/hailuand/corgimq.git</developerConnection>
+        <connection>scm:git:git@github.com:hailuand/corgimq.git</connection>
+        <developerConnection>scm:git:git@github.com:hailuand/corgimq.git</developerConnection>
         <url>https://github.com/hailuand/corgimq/tree/main</url>
       <tag>HEAD</tag>
   </scm>
