@@ -58,7 +58,7 @@
         <!-- junit -->
         <junit.jupiter.version>5.10.3</junit.jupiter.version>
         <!-- h2 -->
-        <h2.version>2.2.224</h2.version>
+        <h2.version>2.3.230</h2.version>
         <!-- datafaker -->
         <datafaker.version>2.3.1</datafaker.version>
         <!-- jacoco -->
