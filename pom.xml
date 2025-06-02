@@ -48,7 +48,7 @@
         <!-- immutables -->
         <immutables.version>2.10.1</immutables.version>
         <!-- postgresql -->
-        <postgresql.version>42.7.5</postgresql.version>
+        <postgresql.version>42.7.6</postgresql.version>
         <!-- mysql -->
         <mysql.version>9.3.0</mysql.version>
         <!-- slf4j -->
