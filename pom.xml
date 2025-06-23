@@ -76,7 +76,7 @@
         <!-- spotless -->
         <spotless.version>2.44.5</spotless.version>
         <!-- sonatype -->
-        <sonatype.publish.plugin.version>0.7.0</sonatype.publish.plugin.version>
+        <sonatype.publish.plugin.version>0.8.0</sonatype.publish.plugin.version>
     </properties>
 
     <dependencyManagement>
