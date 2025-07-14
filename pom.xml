@@ -74,7 +74,7 @@
         <!-- hikaricp -->
         <hikaricp.version>6.3.0</hikaricp.version>
         <!-- spotless -->
-        <spotless.version>2.44.5</spotless.version>
+        <spotless.version>2.45.0</spotless.version>
         <!-- sonatype -->
         <sonatype.publish.plugin.version>0.8.0</sonatype.publish.plugin.version>
     </properties>
