@@ -60,7 +60,7 @@
         <!-- h2 -->
         <h2.version>2.3.232</h2.version>
         <!-- datafaker -->
-        <datafaker.version>2.4.4</datafaker.version>
+        <datafaker.version>2.5.0</datafaker.version>
         <!-- jacoco -->
         <jacoco.version>0.8.13</jacoco.version>
         <!-- maven plugins -->
