@@ -46,7 +46,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- immutables -->
-        <immutables.version>2.11.3</immutables.version>
+        <immutables.version>2.11.4</immutables.version>
         <!-- postgresql -->
         <postgresql.version>42.7.8</postgresql.version>
         <!-- mysql -->
@@ -54,18 +54,18 @@
         <!-- slf4j -->
         <slf4j.api.version>2.0.17</slf4j.api.version>
         <!-- log4j2 -->
-        <log4j2.version>2.25.1</log4j2.version>
+        <log4j2.version>2.25.2</log4j2.version>
         <!-- junit -->
         <junit.jupiter.version>5.13.4</junit.jupiter.version>
         <!-- h2 -->
-        <h2.version>2.3.232</h2.version>
+        <h2.version>2.4.240</h2.version>
         <!-- datafaker -->
-        <datafaker.version>2.4.4</datafaker.version>
+        <datafaker.version>2.5.1</datafaker.version>
         <!-- jacoco -->
         <jacoco.version>0.8.13</jacoco.version>
         <!-- maven plugins -->
-        <maven.dependency.plugin.version>3.8.1</maven.dependency.plugin.version>
-        <maven.javadoc.plugin.version>3.11.3</maven.javadoc.plugin.version>
+        <maven.dependency.plugin.version>3.9.0</maven.dependency.plugin.version>
+        <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <maven.release.plugin.version>3.1.1</maven.release.plugin.version>
@@ -74,9 +74,9 @@
         <!-- hikaricp -->
         <hikaricp.version>7.0.2</hikaricp.version>
         <!-- spotless -->
-        <spotless.version>2.46.1</spotless.version>
+        <spotless.version>3.0.0</spotless.version>
         <!-- sonatype -->
-        <sonatype.publish.plugin.version>0.8.0</sonatype.publish.plugin.version>
+        <sonatype.publish.plugin.version>0.9.0</sonatype.publish.plugin.version>
     </properties>
 
     <dependencyManagement>
