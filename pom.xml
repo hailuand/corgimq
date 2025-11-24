@@ -70,7 +70,7 @@
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <maven.release.plugin.version>3.2.0</maven.release.plugin.version>
         <!-- test containers -->
-        <testcontainers.version>2.0.1</testcontainers.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
         <!-- hikaricp -->
         <hikaricp.version>7.0.2</hikaricp.version>
         <!-- spotless -->
