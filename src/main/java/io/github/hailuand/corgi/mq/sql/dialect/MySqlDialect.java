@@ -32,12 +32,10 @@ public class MySqlDialect extends StandardSqlDialect {
 
     @Override
     public String indexDdl(String schemaName, String tableName) {
-        return handleMySqlIdentifiers(
-                """
+        return handleMySqlIdentifiers("""
                 CREATE INDEX "%s"
                 ON "%s"."%s" ("processing_time")
-                """
-                        .formatted(getProcessingTimeIndexName(tableName), schemaName, tableName));
+                """.formatted(getProcessingTimeIndexName(tableName), schemaName, tableName));
     }
 
     @Override
@@ -48,8 +46,7 @@ public class MySqlDialect extends StandardSqlDialect {
                 WHERE "table_schema" = '%s'
                 AND "table_name" = '%s'
                 AND "index_name" = '%s';
-                """
-                .formatted(schemaName, tableName, getProcessingTimeIndexName(tableName));
+                """.formatted(schemaName, tableName, getProcessingTimeIndexName(tableName));
     }
 
     @Override

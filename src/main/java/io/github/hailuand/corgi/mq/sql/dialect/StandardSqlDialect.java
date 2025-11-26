@@ -38,8 +38,7 @@ public class StandardSqlDialect implements SqlDialect {
                     "read_by" VARCHAR(16),
                     "data" TEXT NOT NULL
                 );
-                """
-                .formatted(schemaName, tableName);
+                """.formatted(schemaName, tableName);
     }
 
     @Override
@@ -47,8 +46,7 @@ public class StandardSqlDialect implements SqlDialect {
         return """
                 CREATE INDEX IF NOT EXISTS "%s"
                 ON "%s"."%s" ("processing_time")
-                """
-                .formatted(getProcessingTimeIndexName(tableName), schemaName, tableName);
+                """.formatted(getProcessingTimeIndexName(tableName), schemaName, tableName);
     }
 
     @Override
@@ -61,8 +59,7 @@ public class StandardSqlDialect implements SqlDialect {
         return """
                 INSERT INTO "%s"."%s" ("id", "data")
                 VALUES (?, ?)
-                """
-                .formatted(schemaName, tableName);
+                """.formatted(schemaName, tableName);
     }
 
     @Override
@@ -71,8 +68,7 @@ public class StandardSqlDialect implements SqlDialect {
                     UPDATE "%s"."%s" SET "processing_time" = CURRENT_TIMESTAMP
                     WHERE "id" = ?
                     AND "processing_time" IS NULL
-                    """
-                .formatted(schemaName, tableName);
+                    """.formatted(schemaName, tableName);
     }
 
     @Override
@@ -81,8 +77,7 @@ public class StandardSqlDialect implements SqlDialect {
                 UPDATE "%s"."%s"
                 SET "read_count" = "read_count" + 1, "read_by" = CURRENT_USER
                 WHERE "id" = ?
-                """
-                .formatted(schemaName, tableName);
+                """.formatted(schemaName, tableName);
     }
 
     @Override
@@ -93,8 +88,7 @@ public class StandardSqlDialect implements SqlDialect {
                 ORDER BY "message_time" ASC
                 LIMIT %d
                 FOR UPDATE SKIP LOCKED
-                """
-                .formatted(schemaName, tableName, numMessages);
+                """.formatted(schemaName, tableName, numMessages);
     }
 
     protected String getProcessingTimeIndexName(String tableName) {

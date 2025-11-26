@@ -70,29 +70,24 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     }
 
     protected Message createMessage() {
-        var data =
-                """
+        var data = """
                 {
                     "key": "%s",
                     "value": "%s"
                 }
-                """
-                        .formatted(
-                                faker.onePiece().character(), faker.onePiece().akumasNoMi());
+                """.formatted(faker.onePiece().character(), faker.onePiece().akumasNoMi());
         return Message.of(data);
     }
 
     protected void createSecondaryTable(String secondaryTableName) throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var ddl =
-                    """
+            var ddl = """
                     CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" INTEGER PRIMARY KEY,
                     "some_data" TEXT NOT NULL
                     );
-                    """
-                            .formatted(messageQueue.tableSchemaName(), secondaryTableName);
+                    """.formatted(messageQueue.tableSchemaName(), secondaryTableName);
             st.execute(ddl);
         }
     }
