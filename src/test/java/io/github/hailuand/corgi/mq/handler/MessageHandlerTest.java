@@ -89,8 +89,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var dml = """
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
-                """
-                .formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
+                """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
         var secondaryDataMapping = new HashMap<Integer, String>();
         listen(dataSource, this.messageHandler, batch -> {
             try (var st = batch.transactionConnection().prepareStatement(dml)) {
@@ -136,8 +135,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var dml = """
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
-                """
-                .formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
+                """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
         assertThrows(
                 RuntimeException.class,
                 () -> listen(dataSource, this.messageHandler, batch -> {
@@ -278,8 +276,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 var st = conn.createStatement()) {
             var processedClause = "";
             if (processed) {
-                processedClause =
-                        """
+                processedClause = """
                         AND "processing_time" IS NOT NULL
                         AND "read_count" > 0
                         AND "read_by" IS NOT NULL
@@ -287,24 +284,22 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             } else {
                 processedClause = "AND \"processing_time\" IS NULL";
             }
-            var sql =
-                    """
+            var sql = """
                     SELECT * from "%s"."%s"
                     WHERE "id" IN %s
                     %s
                     ORDER BY "message_time" ASC
-                    """
-                            .formatted(
-                                    this.messageQueue.tableSchemaName(),
-                                    this.messageQueue.queueTableName(),
-                                    messages.stream()
-                                            .map(Message::id)
-                                            .map("'%s'"::formatted)
-                                            .toList()
-                                            .toString()
-                                            .replace('[', '(')
-                                            .replace(']', ')'),
-                                    processedClause);
+                    """.formatted(
+                            this.messageQueue.tableSchemaName(),
+                            this.messageQueue.queueTableName(),
+                            messages.stream()
+                                    .map(Message::id)
+                                    .map("'%s'"::formatted)
+                                    .toList()
+                                    .toString()
+                                    .replace('[', '(')
+                                    .replace(']', ')'),
+                            processedClause);
             var rs = st.executeQuery(sql);
             var inTable = new HashMap<>();
             while (rs.next()) {

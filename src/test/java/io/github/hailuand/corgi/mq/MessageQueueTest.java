@@ -149,13 +149,11 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                         conn -> {
                             try (var st = conn.createStatement()) {
                                 // work on a different table as part of txn
-                                var insertDml =
-                                        """
+                                var insertDml = """
                     INSERT INTO "%s"."%s" VALUES
                     (1, 'pembroke welsh'),
                     (2, 'cardigan welsh')
-                    """
-                                                .formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
+                    """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
                                 st.executeUpdate(insertDml);
                                 this.messageQueue.push(messages, conn);
                             } catch (SQLException e) {
@@ -187,13 +185,11 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                         conn -> {
                             try (var st = conn.createStatement()) {
                                 // work on a different table as part of txn
-                                var insertDml =
-                                        """
+                                var insertDml = """
                     INSERT INTO "%s"."%s" VALUES
                     (1, 'pembroke welsh'),
                     (2, 'cardigan welsh')
-                    """
-                                                .formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
+                    """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
                                 st.executeUpdate(insertDml);
                                 var messages = List.of(createMessage(), createMessage());
                                 this.messageQueue.push(messages, conn);
@@ -246,13 +242,11 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             var userRs = st.executeQuery("SELECT CURRENT_USER");
             userRs.next();
             var expectedUser = userRs.getString("CURRENT_USER");
-            var sql =
-                    """
+            var sql = """
                     SELECT * FROM "%s"."%s"
                     WHERE "read_count" > 0
                     AND "read_by" IS NOT NULL
-                    """
-                            .formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
+                    """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
             var rs = st.executeQuery(sql);
             assertTrue(rs.isBeforeFirst());
             var actual = new ArrayList<Message>();
