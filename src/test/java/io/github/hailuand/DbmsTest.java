@@ -28,9 +28,13 @@ import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
-import org.testcontainers.containers.*;
+import org.testcontainers.cockroachdb.CockroachContainer;
+import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.mssqlserver.MSSQLServerContainer;
+import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
@@ -46,10 +50,10 @@ public abstract class DbmsTest {
 
     @Container
     private static final JdbcDatabaseContainer<?> postgres =
-            new PostgreSQLContainer<>(DockerImageName.parse("postgres").withTag("16.2"));
+            new PostgreSQLContainer(DockerImageName.parse("postgres").withTag("16.2"));
 
     @Container
-    private static final JdbcDatabaseContainer<?> mySql = new MySQLContainer<>(
+    private static final JdbcDatabaseContainer<?> mySql = new MySQLContainer(
                     DockerImageName.parse("mysql").withTag("8.3.0"))
             .withUsername("root")
             .withPassword("")
@@ -59,11 +63,17 @@ public abstract class DbmsTest {
     private static final JdbcDatabaseContainer<?> cockroachDb = new CockroachContainer(
             DockerImageName.parse("cockroachdb/cockroach").withTag("v23.1.16"));
 
+    @Container
+    private static final JdbcDatabaseContainer<?> mssql = new MSSQLServerContainer(
+                    DockerImageName.parse("mcr.microsoft.com/mssql/server").withTag("2022-CU10-ubuntu-22.04"))
+            .acceptLicense();
+
     protected void configure(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
         switch (dataSource) {
             case COCKROACHDB -> this.jdbcContainer = cockroachDb;
             case POSTGRES -> this.jdbcContainer = postgres;
             case MYSQL -> this.jdbcContainer = mySql;
+            case MSSQL -> this.jdbcContainer = mssql;
         }
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
@@ -85,6 +95,24 @@ public abstract class DbmsTest {
                 case H2 -> st.execute("DROP ALL OBJECTS");
                 case COCKROACHDB, POSTGRES -> st.execute("DROP SCHEMA %s CASCADE".formatted(MessageQueue.SCHEMA_NAME));
                 case MYSQL -> st.execute("DROP SCHEMA %s".formatted(MessageQueue.SCHEMA_NAME));
+                case MSSQL -> {
+                    String dropScript = """
+        DECLARE @sql NVARCHAR(MAX) = '';
+        SELECT @sql += 'ALTER TABLE [%s].[' + OBJECT_NAME(parent_object_id) + '] DROP CONSTRAINT [' + name + ']; '
+        FROM sys.foreign_keys WHERE SCHEMA_NAME(schema_id) = '%s';
+        SELECT @sql += 'DROP TABLE [%s].[' + name + ']; '
+        FROM sys.tables WHERE SCHEMA_NAME(schema_id) = '%s';
+        IF @sql <> '' EXEC sp_executesql @sql;
+        DROP SCHEMA IF EXISTS [%s];
+        """.formatted(
+                                    MessageQueue.SCHEMA_NAME,
+                                    MessageQueue.SCHEMA_NAME,
+                                    MessageQueue.SCHEMA_NAME,
+                                    MessageQueue.SCHEMA_NAME,
+                                    MessageQueue.SCHEMA_NAME);
+                    st.execute(dropScript);
+                }
+
                 default -> fail("Not implemented: %s".formatted(dataSource.name()));
             }
         }
@@ -94,14 +122,14 @@ public abstract class DbmsTest {
     protected String getUserName(AbstractMessageQueueTest.DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_USER_NAME;
-            case COCKROACHDB, MYSQL, POSTGRES -> this.jdbcContainer.getUsername();
+            case COCKROACHDB, MYSQL, POSTGRES, MSSQL -> this.jdbcContainer.getUsername();
         };
     }
 
     protected String getPassword(AbstractMessageQueueTest.DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_PASSWORD;
-            case COCKROACHDB, MYSQL, POSTGRES -> this.jdbcContainer.getPassword();
+            case COCKROACHDB, MYSQL, POSTGRES, MSSQL -> this.jdbcContainer.getPassword();
         };
     }
 
@@ -109,6 +137,7 @@ public abstract class DbmsTest {
         return switch (dataSource) {
             case H2 -> H2_JDBC_URL;
             case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
+            case MSSQL -> "%s;quotedIdentifier=on".formatted(this.jdbcContainer.getJdbcUrl());
             case COCKROACHDB, POSTGRES -> this.jdbcContainer.getJdbcUrl();
         };
     }
@@ -118,6 +147,7 @@ public abstract class DbmsTest {
         switch (dataSource) {
             case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
             case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
+            case MSSQL -> RelationalTestUtil.assertMsSQLPrimaryKeyViolation(exception);
             case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
             default -> fail("Not implemented: %s".formatted(dataSource.name()));
         }
@@ -128,5 +158,6 @@ public abstract class DbmsTest {
         COCKROACHDB,
         MYSQL,
         POSTGRES,
+        MSSQL
     }
 }

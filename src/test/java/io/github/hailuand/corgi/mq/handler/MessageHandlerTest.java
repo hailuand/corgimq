@@ -82,7 +82,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     public void testHandleInTransaction(DataSource dataSource) throws SQLException {
         configure(dataSource);
         String secondaryTableName = "handler_results";
-        createSecondaryTable(secondaryTableName);
+        createSecondaryTable(dataSource, secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
         var handled = new ArrayList<Message>();
@@ -129,7 +129,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     public void testHandleInTransactionFailed(DataSource dataSource) throws SQLException {
         configure(dataSource);
         String secondaryTableName = "handler_results";
-        createSecondaryTable(secondaryTableName);
+        createSecondaryTable(dataSource, secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
         var dml = """
@@ -165,7 +165,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     public void testHandleSqlExceptionSql(DataSource dataSource) throws SQLException {
         configure(dataSource);
         String secondaryTableName = "handler_results";
-        createSecondaryTable(secondaryTableName);
+        createSecondaryTable(dataSource, secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
         assertThrows(
