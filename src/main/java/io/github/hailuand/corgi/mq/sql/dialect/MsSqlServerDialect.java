@@ -19,7 +19,7 @@
 
 package io.github.hailuand.corgi.mq.sql.dialect;
 
-public class MSSqlServerDialect implements SqlDialect {
+public class MsSqlServerDialect implements SqlDialect {
     @Override
     public String schemaDdl(String schemaName) {
         return """

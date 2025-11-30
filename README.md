@@ -48,12 +48,13 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 #### RDMS
 RDBMS in this list have been tested for library compatability and are included in the test suites.
 
-| DBMS        | Status             |
-|-------------|--------------------|
-| H2          | :white_check_mark: |
-| CockroachDB | :white_check_mark: |
-| MySQL       | :white_check_mark: |
-| Postgres    | :white_check_mark: |
+| DBMS                 | Status             |
+|----------------------|--------------------|
+| H2                   | :white_check_mark: |
+| CockroachDB          | :white_check_mark: |
+| MySQL                | :white_check_mark: |
+| Microsoft SQL Server | :white_check_mark: |
+| Postgres             | :white_check_mark: |
 
 ---
 

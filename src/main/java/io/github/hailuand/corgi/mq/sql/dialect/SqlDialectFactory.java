@@ -28,7 +28,7 @@ public class SqlDialectFactory {
         if (dbProduct.equals("MySQL")) {
             return new MySqlDialect();
         } else if (dbProduct.equals("Microsoft SQL Server")) {
-            return new MSSqlServerDialect();
+            return new MsSqlServerDialect();
         } else {
             return new StandardSqlDialect();
         }

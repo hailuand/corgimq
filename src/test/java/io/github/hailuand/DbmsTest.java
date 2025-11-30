@@ -146,7 +146,8 @@ public abstract class DbmsTest {
             AbstractMessageQueueTest.DataSource dataSource, SQLException exception) {
         switch (dataSource) {
             case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
-            case MYSQL, MSSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
+            case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
+            case MSSQL -> RelationalTestUtil.assertMsSQLPrimaryKeyViolation(exception);
             case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
             default -> fail("Not implemented: %s".formatted(dataSource.name()));
         }
