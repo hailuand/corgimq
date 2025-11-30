@@ -79,15 +79,37 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
         return Message.of(data);
     }
 
-    protected void createSecondaryTable(String secondaryTableName) throws SQLException {
+    protected void createSecondaryTable(DataSource dataSource, String secondaryTableName) throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var ddl = """
+            String ddl;
+            switch (dataSource) {
+                case MSSQL -> {
+                    ddl = """
+                IF NOT EXISTS (SELECT * FROM sys.tables t
+                    JOIN sys.schemas s ON t.schema_id = s.schema_id
+                    WHERE s.name = '%s' AND t.name = '%s')
+                BEGIN
+                    CREATE TABLE [%s].[%s] (
+                    [id] INTEGER PRIMARY KEY,
+                    [some_data] NVARCHAR(MAX) NOT NULL
+                    )
+                END
+                """.formatted(
+                                    messageQueue.tableSchemaName(),
+                                    secondaryTableName,
+                                    messageQueue.tableSchemaName(),
+                                    secondaryTableName);
+                }
+                default -> {
+                    ddl = """
                     CREATE TABLE IF NOT EXISTS "%s"."%s" (
                     "id" INTEGER PRIMARY KEY,
                     "some_data" TEXT NOT NULL
                     );
                     """.formatted(messageQueue.tableSchemaName(), secondaryTableName);
+                }
+            }
             st.execute(ddl);
         }
     }

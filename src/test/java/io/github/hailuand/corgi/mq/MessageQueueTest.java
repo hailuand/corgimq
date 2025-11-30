@@ -135,7 +135,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testPushTransaction(DataSource dataSource) throws SQLException {
         configure(dataSource);
         String secondaryTableName = "varieties";
-        createSecondaryTable(secondaryTableName);
+        createSecondaryTable(dataSource, secondaryTableName);
         var messages = List.of(createMessage(), createMessage());
         new TransactionManager()
                 .executeInTransaction(
@@ -172,7 +172,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testPushTransactionFails(DataSource dataSource) throws SQLException {
         configure(dataSource);
         String secondaryTableName = "varieties";
-        createSecondaryTable(secondaryTableName);
+        createSecondaryTable(dataSource, secondaryTableName);
         assertThrows(RuntimeException.class, () -> new TransactionManager()
                 .executeInTransaction(
                         () -> {
@@ -241,7 +241,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 var st = conn.createStatement()) {
             var userRs = st.executeQuery("SELECT CURRENT_USER");
             userRs.next();
-            var expectedUser = userRs.getString("CURRENT_USER");
+            var expectedUser = userRs.getString(1);
             var sql = """
                     SELECT * FROM "%s"."%s"
                     WHERE "read_count" > 0

@@ -51,6 +51,8 @@
         <postgresql.version>42.7.8</postgresql.version>
         <!-- mysql -->
         <mysql.version>9.5.0</mysql.version>
+        <!-- mssql -->
+        <mssql.version>13.2.1.jre11</mssql.version>
         <!-- slf4j -->
         <slf4j.api.version>2.0.17</slf4j.api.version>
         <!-- log4j2 -->
@@ -114,6 +116,14 @@
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>${mysql.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- MSSQL -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>${mssql.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -188,6 +198,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-cockroachdb</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-mssqlserver</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
