@@ -52,7 +52,7 @@
         <!-- mysql -->
         <mysql.version>9.5.0</mysql.version>
         <!-- mssql -->
-        <mssql.version>13.2.1.jre11</mssql.version>
+        <mssql.version>13.3.0.jre11-preview</mssql.version>
         <!-- slf4j -->
         <slf4j.api.version>2.0.17</slf4j.api.version>
         <!-- log4j2 -->
