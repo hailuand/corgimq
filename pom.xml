@@ -301,6 +301,7 @@
                     <ignoredUnusedDeclaredDependencies>
                         <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.microsoft.sqlserver:mssql-jdbc</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>com.oracle.database.jdbc:ojdbc11</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                 </configuration>
                 <executions>
