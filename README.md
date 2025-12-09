@@ -54,6 +54,7 @@ RDBMS in this list have been tested for library compatability and are included i
 | CockroachDB          | :white_check_mark: |
 | MySQL                | :white_check_mark: |
 | Microsoft SQL Server | :white_check_mark: |
+| Oracle DB            | :microscope:       |
 | Postgres             | :white_check_mark: |
 
 ---

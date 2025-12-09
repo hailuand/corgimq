@@ -71,9 +71,9 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testHandleNoMessages(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        assertTableRowCount(0);
+        assertTableRowCount(dataSource, 0);
         push(dataSource, Collections.emptyList());
-        assertTableRowCount(0);
+        assertTableRowCount(dataSource, 0);
         tearDown(dataSource);
     }
 
@@ -89,10 +89,11 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var dml = """
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
-                """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
+               """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
         var secondaryDataMapping = new HashMap<Integer, String>();
         listen(dataSource, this.messageHandler, batch -> {
-            try (var st = batch.transactionConnection().prepareStatement(dml)) {
+            try (var txn = batch.transactionConnection()) {
+                var st = txn.prepareStatement(dml);
                 int id = 0;
                 for (var msg : batch.messages()) {
                     st.setInt(1, id);
@@ -135,12 +136,13 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var dml = """
                INSERT INTO "%s"."%s" VALUES
                 (?, ?)
-                """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
+               """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
         assertThrows(
                 RuntimeException.class,
                 () -> listen(dataSource, this.messageHandler, batch -> {
                     var handled = new ArrayList<Message>();
-                    try (var st = batch.transactionConnection().prepareStatement(dml)) {
+                    try (var txn = batch.transactionConnection()) {
+                        var st = txn.prepareStatement(dml);
                         int id = 0;
                         for (var msg : batch.messages()) {
                             st.setInt(1, id);
@@ -171,7 +173,8 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         assertThrows(
                 RuntimeException.class,
                 () -> listen(dataSource, this.messageHandler, batch -> {
-                    try (var st = batch.transactionConnection().createStatement()) {
+                    try (var conn = batch.transactionConnection()) {
+                        var st = conn.createStatement();
                         var sql = "select * from foobar";
                         st.execute(sql);
                     } catch (SQLException e) {

@@ -31,7 +31,7 @@ import org.postgresql.util.PSQLException;
 import org.postgresql.util.PSQLState;
 
 public final class RelationalTestUtil {
-    private static final String MSSQL_INTEGRITY_VIOLATION_SQL_STATE = "23000";
+    private static final String INTEGRITY_VIOLATION_SQL_STATE = "23000";
     private static final int MSSQL_INTEGRITY_VIOLATION_ERROR_CODE = 2627;
 
     public static void assertH2PrimaryKeyViolation(SQLException exception) {
@@ -50,7 +50,7 @@ public final class RelationalTestUtil {
 
     public static void assertMsSQLPrimaryKeyViolation(SQLException sqlException) {
         assertInstanceOf(BatchUpdateException.class, sqlException);
-        assertEquals(MSSQL_INTEGRITY_VIOLATION_SQL_STATE, sqlException.getSQLState(), "PKey violation error state");
+        assertEquals(INTEGRITY_VIOLATION_SQL_STATE, sqlException.getSQLState(), "PKey violation error state");
         assertEquals(MSSQL_INTEGRITY_VIOLATION_ERROR_CODE, sqlException.getErrorCode(), "PKey violation error code");
         assertTrue(sqlException.getMessage().contains("Violation of PRIMARY KEY constraint"));
         assertTrue(sqlException.getMessage().contains("Cannot insert duplicate key"));
@@ -61,5 +61,19 @@ public final class RelationalTestUtil {
         var psqlException = sqlException.getNextException();
         assertInstanceOf(PSQLException.class, psqlException);
         assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), psqlException.getSQLState());
+    }
+
+    public static void assertOracleDbPrimaryKeyViolation(SQLException sqlException) {
+        assertInstanceOf(BatchUpdateException.class, sqlException);
+        assertNotNull(sqlException.getNextException());
+        assertEquals(INTEGRITY_VIOLATION_SQL_STATE, sqlException.getSQLState());
+        assertTrue(
+                sqlException.getMessage().contains("ORA-00001: unique constraint"),
+                "Unique constraint violation error");
+        assertTrue(
+                sqlException.getMessage().contains("ORA-03301: (ORA-00001 details) row with column values"),
+                "Explains duplicate row details");
+        var nextException = sqlException.getNextException();
+        assertInstanceOf(SQLIntegrityConstraintViolationException.class, nextException);
     }
 }

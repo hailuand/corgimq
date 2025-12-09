@@ -25,12 +25,11 @@ import java.sql.SQLException;
 public class SqlDialectFactory {
     public SqlDialect createSqlDialect(Connection conn) throws SQLException {
         String dbProduct = conn.getMetaData().getDatabaseProductName();
-        if (dbProduct.equals("MySQL")) {
-            return new MySqlDialect();
-        } else if (dbProduct.equals("Microsoft SQL Server")) {
-            return new MsSqlServerDialect();
-        } else {
-            return new StandardSqlDialect();
-        }
+        return switch (dbProduct) {
+            case "MySQL" -> new MySqlDialect();
+            case "Microsoft SQL Server" -> new MsSqlServerDialect();
+            case "Oracle" -> new OracleDbDialect();
+            default -> new StandardSqlDialect();
+        };
     }
 }
