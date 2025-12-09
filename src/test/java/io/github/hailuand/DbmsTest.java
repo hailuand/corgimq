@@ -94,13 +94,15 @@ public abstract class DbmsTest {
         return hikariDataSource.getConnection();
     }
 
-    protected void tearDown(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
+    protected void tearDown(AbstractMessageQueueTest.DataSource dataSource, MessageQueue messageQueue)
+            throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             switch (dataSource) {
                 case H2 -> st.execute("DROP ALL OBJECTS");
-                case COCKROACHDB, POSTGRES -> st.execute("DROP SCHEMA %s CASCADE".formatted(MessageQueue.SCHEMA_NAME));
-                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(MessageQueue.SCHEMA_NAME));
+                case COCKROACHDB, POSTGRES ->
+                    st.execute("DROP SCHEMA %s CASCADE".formatted(messageQueue.tableSchemaName()));
+                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(messageQueue.tableSchemaName()));
                 case MSSQL -> {
                     String dropScript = """
         DECLARE @sql NVARCHAR(MAX) = '';
@@ -111,11 +113,11 @@ public abstract class DbmsTest {
         IF @sql <> '' EXEC sp_executesql @sql;
         DROP SCHEMA IF EXISTS [%s];
         """.formatted(
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME);
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName());
                     st.execute(dropScript);
                 }
                 case ORACLE_FREE -> {

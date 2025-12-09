@@ -63,7 +63,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             return handled;
         });
         assertTrue(handled.isEmpty());
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -73,7 +73,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         assertTableRowCount(dataSource, 0);
         push(dataSource, Collections.emptyList());
         assertTableRowCount(dataSource, 0);
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -128,7 +128,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 assertEquals(secondaryDataMapping.get(id), otherData);
             }
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -172,7 +172,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 }));
         sleepJitterForTransactionPropagation(dataSource);
         assertMessagesInTable(dataSource, messages, false); // no messages popped
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -196,7 +196,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     return null;
                 }));
         assertMessagesInTable(dataSource, messages, false); // no messages popped
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -227,7 +227,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             assertMessagesInTable(dataSource, processed, true);
         }
         Assertions.assertTrue(msgsMap.isEmpty());
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -247,7 +247,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         assertMessagesInTable(dataSource, processing, true);
         messages.removeAll(processing);
         assertMessagesInTable(dataSource, messages, false);
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -284,7 +284,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 .filter(m -> !threadMessages1.contains(m) && !threadMessages2.contains(m))
                 .toList();
         assertMessagesInTable(dataSource, unprocessedMessages, false);
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     private void assertMessagesInTable(DataSource dataSource, List<Message> messages, boolean processed)

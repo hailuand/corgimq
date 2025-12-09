@@ -40,7 +40,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     public void testInitSources(DataSource dataSource) throws SQLException {
         configure(dataSource);
         assertTableRowCount(dataSource, 0);
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -55,7 +55,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             var pending = this.messageQueue.read(10, conn);
             assertMessages(messages, pending);
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -99,7 +99,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 assertEquals(unprocessedMessage, processedMessage);
             }
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -118,7 +118,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 }
             });
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -132,7 +132,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             Assertions.assertTrue(this.messageQueue.read(10, conn).isEmpty());
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -177,7 +177,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             assertMessages(messages, this.messageQueue.read(10, conn));
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -225,7 +225,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             assertMessages(
                     Collections.emptyList(), this.messageQueue.read(10, conn), "failed txn changes not committed");
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -244,7 +244,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             this.messageQueue.read(10, conn);
             assertAuditMetadata(dataSource, messages, expectedReadCount + 1);
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -254,7 +254,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             this.messageQueue.createTableWithSchemaIfNotExists(conn);
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     private void assertAuditMetadata(DataSource dataSource, List<Message> expectedMessages, int expectedRowCount)
