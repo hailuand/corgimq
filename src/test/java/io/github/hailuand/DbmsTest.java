@@ -27,6 +27,7 @@ import io.github.hailuand.corgi.mq.MessageQueue;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import org.testcontainers.cockroachdb.CockroachContainer;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -75,7 +76,8 @@ public abstract class DbmsTest {
 
     @Container
     private static final JdbcDatabaseContainer<?> oracleXe = new org.testcontainers.containers.OracleContainer(
-            DockerImageName.parse("gvenzl/oracle-xe").withTag("21-slim-faststart"));
+                    DockerImageName.parse("gvenzl/oracle-xe").withTag("21-slim-faststart"))
+            .withStartupTimeout(Duration.ofMinutes(10));
 
     protected void configure(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
         switch (dataSource) {
