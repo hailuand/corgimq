@@ -51,10 +51,11 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     protected void assertTableRowCount(DataSource dataSource, int expectedRowCount) throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var countQuery = "SELECT COUNT(*) from \"%s\".\"%s\""
-                    .formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName());
+            var countQuery = """
+                    SELECT COUNT(*) from "%s"."%s"
+                    """.formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName());
             if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
-                countQuery = "SELECT COUNT(*) from \"%s\"".formatted(messageQueue.queueTableName());
+                countQuery = "SELECT COUNT(*) from %s".formatted(messageQueue.queueTableName());
             }
             var rs = st.executeQuery(countQuery);
             Assertions.assertTrue(rs.isBeforeFirst());
@@ -110,10 +111,10 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
                 BEGIN
                     SELECT COUNT(*) INTO table_count
                     FROM user_tables
-                    WHERE table_name = '%s';
+                    WHERE UPPER(table_name) = '%s';
 
                     IF table_count = 0 THEN
-                        EXECUTE IMMEDIATE 'CREATE TABLE "%s" (
+                        EXECUTE IMMEDIATE 'CREATE TABLE %s (
                             "id" INTEGER PRIMARY KEY,
                             "some_data" CLOB NOT NULL
                         )';

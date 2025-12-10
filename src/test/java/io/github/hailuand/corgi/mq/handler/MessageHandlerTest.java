@@ -89,9 +89,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 "%s"."%s"
                 """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
         if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
-            tableName = """
-                    "%s"
-                    """.formatted(secondaryTableName);
+            tableName = secondaryTableName;
         }
         var dml = """
                INSERT INTO %s VALUES
@@ -143,9 +141,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 "%s"."%s"
                 """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
         if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
-            tableName = """
-                    "%s"
-                    """.formatted(secondaryTableName);
+            tableName = secondaryTableName;
         }
         var dml = """
                INSERT INTO %s VALUES
@@ -305,9 +301,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     "%s"."%s"
                     """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
             if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
-                tableName = """
-                        "%s"
-                        """.formatted(this.messageQueue.queueTableName());
+                tableName = this.messageQueue.queueTableName();
             }
             var sql = """
                     SELECT * from %s

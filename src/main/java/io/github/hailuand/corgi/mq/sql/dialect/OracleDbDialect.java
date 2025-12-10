@@ -34,10 +34,10 @@ public class OracleDbDialect implements SqlDialect {
             BEGIN
                 SELECT COUNT(*) INTO v_count
                 FROM user_tables
-                WHERE table_name = '%s';
+                WHERE table_name = UPPER('%s');
 
                 IF v_count = 0 THEN
-                    EXECUTE IMMEDIATE 'CREATE TABLE "%s" ("read_count" NUMBER DEFAULT 0 NOT NULL, "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, "processing_time" TIMESTAMP, "id" VARCHAR2(36) PRIMARY KEY, "read_by" VARCHAR2(16), "data" CLOB NOT NULL)';
+                    EXECUTE IMMEDIATE 'CREATE TABLE %s ("read_count" NUMBER DEFAULT 0 NOT NULL, "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, "processing_time" TIMESTAMP, "id" VARCHAR2(36) PRIMARY KEY, "read_by" VARCHAR2(16), "data" CLOB NOT NULL)';
                 END IF;
             END;
             """.formatted(tableName, tableName);
@@ -51,10 +51,10 @@ public class OracleDbDialect implements SqlDialect {
                 BEGIN
                     SELECT COUNT(*) INTO v_count
                     FROM user_indexes
-                    WHERE index_name = '%s';
+                    WHERE index_name = UPPER('%s');
 
                     IF v_count = 0 THEN
-                        EXECUTE IMMEDIATE 'CREATE INDEX "%s" ON "%s" ("processing_time")';
+                        EXECUTE IMMEDIATE 'CREATE INDEX %s ON %s ("processing_time")';
                     END IF;
                 END;
                 """.formatted(getProcessingTimeIndexName(tableName), getProcessingTimeIndexName(tableName), tableName);
@@ -65,15 +65,15 @@ public class OracleDbDialect implements SqlDialect {
         return """
                 SELECT COUNT(*) as count
                 FROM user_indexes
-                WHERE table_name = '%s'
-                AND index_name = '%s'
+                WHERE table_name = UPPER('%s')
+                AND index_name = UPPER('%s')
                 """.formatted(tableName, getProcessingTimeIndexName(tableName));
     }
 
     @Override
     public String pushMessagesDml(String schemaName, String tableName) {
         return """
-                INSERT INTO "%s" ("id", "data")
+                INSERT INTO %s ("id", "data")
                 VALUES (?, ?)
                 """.formatted(tableName);
     }
@@ -81,7 +81,7 @@ public class OracleDbDialect implements SqlDialect {
     @Override
     public String popMessagesDml(String schemaName, String tableName) {
         return """
-                UPDATE "%s" SET "processing_time" = CURRENT_TIMESTAMP
+                UPDATE %s SET "processing_time" = CURRENT_TIMESTAMP
                 WHERE "id" = ?
                 AND "processing_time" IS NULL
                 """.formatted(tableName);
@@ -90,7 +90,7 @@ public class OracleDbDialect implements SqlDialect {
     @Override
     public String updateReadCountDml(String schemaName, String tableName) {
         return """
-                UPDATE "%s"
+                UPDATE %s
                 SET "read_count" = "read_count" + 1, "read_by" = USER
                 WHERE "id" = ?
                 """.formatted(tableName);
@@ -99,7 +99,7 @@ public class OracleDbDialect implements SqlDialect {
     @Override
     public String readMessagesDql(String schemaName, String tableName, int numMessages) {
         return """
-                SELECT * FROM "%s"
+                SELECT * FROM %s
                 WHERE "processing_time" IS NULL
                 ORDER BY "message_time" ASC
                 FETCH FIRST %d ROWS ONLY

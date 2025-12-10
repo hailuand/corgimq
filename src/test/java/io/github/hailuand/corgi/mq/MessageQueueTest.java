@@ -78,11 +78,11 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         // assert in separate txn
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var query = "SELECT * from \"%s\".\"%s\" ORDER BY \"message_time\" ASC"
-                    .formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
+            var query = """
+                    SELECT * from "%s"."%s" ORDER BY "message_time" ASC
+                    """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
             if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
-                query = "SELECT * from \"%s\" ORDER BY \"message_time\" ASC"
-                        .formatted(this.messageQueue.queueTableName());
+                query = "SELECT * from %s ORDER BY \"message_time\" ASC".formatted(this.messageQueue.queueTableName());
             }
             var rs = st.executeQuery(query);
             Assertions.assertTrue(rs.isBeforeFirst());
@@ -163,9 +163,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                     (2, 'cardigan welsh')
                     """.formatted(tableName);
                                 if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
-                                    tableName = """
-                                            "%s"
-                                            """.formatted(secondaryTableName);
+                                    tableName = secondaryTableName;
                                     insertDml = """
                     INSERT ALL
                         INTO %s VALUES (1, 'pembroke welsh')
@@ -214,7 +212,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                     """.formatted(tableName);
                                 if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
                                     tableName = """
-                                            "%s"
+                                            %s
                                             """.formatted(secondaryTableName);
                                     insertDml = """
                         INSERT ALL
@@ -280,9 +278,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             userRs.next();
             var expectedUser = userRs.getString(1);
             var tableName = (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE)
-                    ? """
-                    "%s"
-                    """.formatted(this.messageQueue.queueTableName())
+                    ? this.messageQueue.queueTableName()
                     : """
                     %s."%s"
                     """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
