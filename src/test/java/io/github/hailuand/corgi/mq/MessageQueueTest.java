@@ -80,7 +80,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 var st = conn.createStatement()) {
             var query = "SELECT * from \"%s\".\"%s\" ORDER BY \"message_time\" ASC"
                     .formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
-            if (dataSource == DataSource.ORACLE_FREE) {
+            if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
                 query = "SELECT * from \"%s\" ORDER BY \"message_time\" ASC"
                         .formatted(this.messageQueue.queueTableName());
             }
@@ -157,16 +157,22 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 var tableName = """
                                         "%s"."%s"
                                         """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
-                                if (dataSource == DataSource.ORACLE_FREE) {
-                                    tableName = """
-                                            "%s"
-                                            """.formatted(secondaryTableName);
-                                }
                                 var insertDml = """
                     INSERT INTO %s VALUES
                     (1, 'pembroke welsh'),
                     (2, 'cardigan welsh')
                     """.formatted(tableName);
+                                if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
+                                    tableName = """
+                                            "%s"
+                                            """.formatted(secondaryTableName);
+                                    insertDml = """
+                    INSERT ALL
+                        INTO %s VALUES (1, 'pembroke welsh')
+                        INTO %s VALUES (2, 'cardigan welsh')
+                    SELECT 1 FROM DUAL
+                    """.formatted(tableName, tableName);
+                                }
                                 st.executeUpdate(insertDml);
                                 this.messageQueue.push(messages, conn);
                             } catch (SQLException e) {
@@ -201,16 +207,22 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 var tableName = """
                                         "%s"."%s"
                                         """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
-                                if (dataSource == DataSource.ORACLE_FREE) {
-                                    tableName = """
-                                            "%s"
-                                            """.formatted(secondaryTableName);
-                                }
                                 var insertDml = """
                     INSERT INTO %s VALUES
                     (1, 'pembroke welsh'),
                     (2, 'cardigan welsh')
                     """.formatted(tableName);
+                                if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
+                                    tableName = """
+                                            "%s"
+                                            """.formatted(secondaryTableName);
+                                    insertDml = """
+                        INSERT ALL
+                            INTO %s VALUES (1, 'pembroke welsh')
+                            INTO %s VALUES (2, 'cardigan welsh')
+                        SELECT 1 FROM DUAL
+                        """.formatted(tableName, tableName);
+                                }
                                 st.executeUpdate(insertDml);
                                 var messages = List.of(createMessage(), createMessage());
                                 this.messageQueue.push(messages, conn);
@@ -261,11 +273,13 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var userFunc = dataSource == DataSource.ORACLE_FREE ? "USER" : "CURRENT_USER";
+            var userFunc = (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE)
+                    ? "USER FROM DUAL"
+                    : "CURRENT_USER";
             var userRs = st.executeQuery("SELECT %s".formatted(userFunc));
             userRs.next();
             var expectedUser = userRs.getString(1);
-            var tableName = dataSource == DataSource.ORACLE_FREE
+            var tableName = (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE)
                     ? """
                     "%s"
                     """.formatted(this.messageQueue.queueTableName())

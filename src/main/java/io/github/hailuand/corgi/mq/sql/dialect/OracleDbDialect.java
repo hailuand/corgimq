@@ -37,14 +37,7 @@ public class OracleDbDialect implements SqlDialect {
                 WHERE table_name = '%s';
 
                 IF v_count = 0 THEN
-                    EXECUTE IMMEDIATE 'CREATE TABLE "%s" (
-                        "read_count" NUMBER DEFAULT 0 NOT NULL,
-                        "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                        "processing_time" TIMESTAMP,
-                        "id" VARCHAR2(36) PRIMARY KEY,
-                        "read_by" VARCHAR2(16),
-                        "data" CLOB NOT NULL
-                    )';
+                    EXECUTE IMMEDIATE 'CREATE TABLE "%s" ("read_count" NUMBER DEFAULT 0 NOT NULL, "message_time" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL, "processing_time" TIMESTAMP, "id" VARCHAR2(36) PRIMARY KEY, "read_by" VARCHAR2(16), "data" CLOB NOT NULL)';
                 END IF;
             END;
             """.formatted(tableName, tableName);
@@ -56,9 +49,9 @@ public class OracleDbDialect implements SqlDialect {
                 DECLARE
                     v_count NUMBER;
                 BEGIN
-                        SELECT COUNT(*) INTO v_count
-                        FROM user_indexes
-                        WHERE index_name = '%s';
+                    SELECT COUNT(*) INTO v_count
+                    FROM user_indexes
+                    WHERE index_name = '%s';
 
                     IF v_count = 0 THEN
                         EXECUTE IMMEDIATE 'CREATE INDEX "%s" ON "%s" ("processing_time")';

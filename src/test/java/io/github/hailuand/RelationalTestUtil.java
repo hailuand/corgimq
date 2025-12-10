@@ -70,9 +70,6 @@ public final class RelationalTestUtil {
         assertTrue(
                 sqlException.getMessage().contains("ORA-00001: unique constraint"),
                 "Unique constraint violation error");
-        assertTrue(
-                sqlException.getMessage().contains("ORA-03301: (ORA-00001 details) row with column values"),
-                "Explains duplicate row details");
         var nextException = sqlException.getNextException();
         assertInstanceOf(SQLIntegrityConstraintViolationException.class, nextException);
     }

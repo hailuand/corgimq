@@ -53,7 +53,7 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
                 var st = conn.createStatement()) {
             var countQuery = "SELECT COUNT(*) from \"%s\".\"%s\""
                     .formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName());
-            if (dataSource == DataSource.ORACLE_FREE) {
+            if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
                 countQuery = "SELECT COUNT(*) from \"%s\"".formatted(messageQueue.queueTableName());
             }
             var rs = st.executeQuery(countQuery);
@@ -104,7 +104,7 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
                                     secondaryTableName,
                                     messageQueue.tableSchemaName(),
                                     secondaryTableName);
-                case ORACLE_FREE -> ddl = """
+                case ORACLE_FREE, ORACLE_XE -> ddl = """
                 DECLARE
                     table_count NUMBER;
                 BEGIN

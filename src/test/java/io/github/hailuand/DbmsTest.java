@@ -73,6 +73,10 @@ public abstract class DbmsTest {
     private static final JdbcDatabaseContainer<?> oracleFree =
             new OracleContainer(DockerImageName.parse("gvenzl/oracle-free").withTag("23.4-slim-faststart"));
 
+    @Container
+    private static final JdbcDatabaseContainer<?> oracleXe = new org.testcontainers.containers.OracleContainer(
+            DockerImageName.parse("gvenzl/oracle-xe").withTag("21-slim-faststart"));
+
     protected void configure(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
         switch (dataSource) {
             case COCKROACHDB -> this.jdbcContainer = cockroachDb;
@@ -80,6 +84,7 @@ public abstract class DbmsTest {
             case MYSQL -> this.jdbcContainer = mySql;
             case MSSQL -> this.jdbcContainer = mssql;
             case ORACLE_FREE -> this.jdbcContainer = oracleFree;
+            case ORACLE_XE -> this.jdbcContainer = oracleXe;
         }
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
@@ -120,7 +125,7 @@ public abstract class DbmsTest {
                                     messageQueue.tableSchemaName());
                     st.execute(dropScript);
                 }
-                case ORACLE_FREE -> {
+                case ORACLE_FREE, ORACLE_XE -> {
                     String dropScript = """
                 DECLARE
                 BEGIN
@@ -161,7 +166,7 @@ public abstract class DbmsTest {
             case H2 -> H2_JDBC_URL;
             case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
             case MSSQL -> "%s;quotedIdentifier=on".formatted(this.jdbcContainer.getJdbcUrl());
-            case COCKROACHDB, POSTGRES, ORACLE_FREE -> this.jdbcContainer.getJdbcUrl();
+            case COCKROACHDB, POSTGRES, ORACLE_FREE, ORACLE_XE -> this.jdbcContainer.getJdbcUrl();
         };
     }
 
@@ -172,7 +177,7 @@ public abstract class DbmsTest {
             case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
             case MSSQL -> RelationalTestUtil.assertMsSQLPrimaryKeyViolation(exception);
             case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
-            case ORACLE_FREE -> RelationalTestUtil.assertOracleDbPrimaryKeyViolation(exception);
+            case ORACLE_FREE, ORACLE_XE -> RelationalTestUtil.assertOracleDbPrimaryKeyViolation(exception);
             default -> fail("Not implemented: %s".formatted(dataSource.name()));
         }
     }
@@ -183,6 +188,7 @@ public abstract class DbmsTest {
         MYSQL,
         MSSQL,
         ORACLE_FREE,
+        ORACLE_XE,
         POSTGRES,
     }
 }
