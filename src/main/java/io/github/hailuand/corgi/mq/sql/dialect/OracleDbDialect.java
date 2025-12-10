@@ -98,11 +98,20 @@ public class OracleDbDialect implements SqlDialect {
 
     @Override
     public String readMessagesDql(String schemaName, String tableName, int numMessages) {
+        // Oracle does not support FETCH FIRST ... SKIP LOCKED directly, so we use a subquery with rowid
         return """
-                SELECT * FROM %s
-                WHERE "processing_time" IS NULL
-                ORDER BY "message_time" ASC
-                FETCH FIRST %d ROWS ONLY
-                """.formatted(tableName, numMessages);
+                SELECT * FROM %s t
+                WHERE t.ROWID IN (
+                    SELECT rid
+                    FROM (
+                        SELECT t1.ROWID rid
+                        FROM %s t1
+                        WHERE t1."processing_time" IS NULL
+                        ORDER BY t1."message_time" ASC
+                        FETCH FIRST %d ROWS ONLY
+                    )
+                )
+                FOR UPDATE SKIP LOCKED
+                """.formatted(tableName, tableName, numMessages);
     }
 }

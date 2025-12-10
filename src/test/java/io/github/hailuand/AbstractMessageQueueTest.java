@@ -54,7 +54,7 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
             var countQuery = """
                     SELECT COUNT(*) from "%s"."%s"
                     """.formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName());
-            if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
+            if (isOracleDb(dataSource)) {
                 countQuery = "SELECT COUNT(*) from %s".formatted(messageQueue.queueTableName());
             }
             var rs = st.executeQuery(countQuery);
@@ -174,5 +174,9 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    protected boolean isOracleDb(DataSource dataSource) {
+        return dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE;
     }
 }

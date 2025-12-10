@@ -88,7 +88,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var tableName = """
                 "%s"."%s"
                 """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
-        if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
+        if (isOracleDb(dataSource)) {
             tableName = secondaryTableName;
         }
         var dml = """
@@ -140,7 +140,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var tableName = """
                 "%s"."%s"
                 """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
-        if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
+        if (isOracleDb(dataSource)) {
             tableName = secondaryTableName;
         }
         var dml = """
@@ -300,7 +300,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             var tableName = """
                     "%s"."%s"
                     """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
-            if (dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE) {
+            if (isOracleDb(dataSource)) {
                 tableName = this.messageQueue.queueTableName();
             }
             var sql = """
