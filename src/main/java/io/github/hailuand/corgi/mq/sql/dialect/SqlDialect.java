@@ -35,4 +35,8 @@ public interface SqlDialect {
     String updateReadCountDml(String schemaName, String tableName);
 
     String readMessagesDql(String schemaName, String tableName, int numMessages);
+
+    default String getProcessingTimeIndexName(String tableName) {
+        return "%s_processing_time_idx".formatted(tableName);
+    }
 }

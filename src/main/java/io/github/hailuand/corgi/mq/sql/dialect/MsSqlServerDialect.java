@@ -114,8 +114,4 @@ public class MsSqlServerDialect implements SqlDialect {
                 ORDER BY [message_time] ASC
                 """.formatted(numMessages, schemaName, tableName);
     }
-
-    private String getProcessingTimeIndexName(String tableName) {
-        return "%s_processing_time_idx".formatted(tableName);
-    }
 }

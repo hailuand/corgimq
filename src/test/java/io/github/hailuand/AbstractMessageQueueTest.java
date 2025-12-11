@@ -48,11 +48,16 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
         }
     }
 
-    protected void assertTableRowCount(int expectedRowCount) throws SQLException {
+    protected void assertTableRowCount(DataSource dataSource, int expectedRowCount) throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var rs = st.executeQuery("SELECT COUNT(*) from \"%s\".\"%s\""
-                    .formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName()));
+            var countQuery = """
+                    SELECT COUNT(*) from "%s"."%s"
+                    """.formatted(messageQueue.tableSchemaName(), messageQueue.queueTableName());
+            if (isOracleDb(dataSource)) {
+                countQuery = "SELECT COUNT(*) from %s".formatted(messageQueue.queueTableName());
+            }
+            var rs = st.executeQuery(countQuery);
             Assertions.assertTrue(rs.isBeforeFirst());
             if (rs.next()) {
                 var count = rs.getLong(1);
@@ -84,31 +89,44 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
                 var st = conn.createStatement()) {
             String ddl;
             switch (dataSource) {
-                case MSSQL -> {
+                case MSSQL ->
                     ddl = """
-                IF NOT EXISTS (SELECT * FROM sys.tables t
-                    JOIN sys.schemas s ON t.schema_id = s.schema_id
-                    WHERE s.name = '%s' AND t.name = '%s')
-                BEGIN
-                    CREATE TABLE [%s].[%s] (
-                    [id] INTEGER PRIMARY KEY,
-                    [some_data] NVARCHAR(MAX) NOT NULL
-                    )
-                END
-                """.formatted(
+            IF NOT EXISTS (SELECT * FROM sys.tables t
+                JOIN sys.schemas s ON t.schema_id = s.schema_id
+                WHERE s.name = '%s' AND t.name = '%s')
+            BEGIN
+                CREATE TABLE [%s].[%s] (
+                [id] INTEGER PRIMARY KEY,
+                [some_data] NVARCHAR(MAX) NOT NULL
+                )
+            END
+            """.formatted(
                                     messageQueue.tableSchemaName(),
                                     secondaryTableName,
                                     messageQueue.tableSchemaName(),
                                     secondaryTableName);
-                }
-                default -> {
-                    ddl = """
-                    CREATE TABLE IF NOT EXISTS "%s"."%s" (
-                    "id" INTEGER PRIMARY KEY,
-                    "some_data" TEXT NOT NULL
-                    );
-                    """.formatted(messageQueue.tableSchemaName(), secondaryTableName);
-                }
+                case ORACLE_FREE -> ddl = """
+                DECLARE
+                    table_count NUMBER;
+                BEGIN
+                    SELECT COUNT(*) INTO table_count
+                    FROM user_tables
+                    WHERE UPPER(table_name) = '%s';
+
+                    IF table_count = 0 THEN
+                        EXECUTE IMMEDIATE 'CREATE TABLE %s (
+                            "id" INTEGER PRIMARY KEY,
+                            "some_data" CLOB NOT NULL
+                        )';
+                    END IF;
+                END;
+                """.formatted(secondaryTableName, secondaryTableName);
+                default -> ddl = """
+                CREATE TABLE IF NOT EXISTS "%s"."%s" (
+                "id" INTEGER PRIMARY KEY,
+                "some_data" TEXT NOT NULL
+                );
+                """.formatted(messageQueue.tableSchemaName(), secondaryTableName);
             }
             st.execute(ddl);
         }
@@ -147,18 +165,18 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     }
 
     protected void sleepJitterForTransactionPropagation(DataSource dataSource) {
-        switch (dataSource) {
-            case COCKROACHDB -> {
-                /*
-                CockroachDB operates on consensus protocol - querying 1ms after committing txn may result in
-                undesired but not incorrect behavior as rows may still be locked
-                 */
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        if (dataSource == DataSource.COCKROACHDB) {
+            // CockroachDB operates on consensus protocol - querying 1ms after committing txn may result in
+            // undesired but not incorrect behavior as rows may still be locked
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
+    }
+
+    protected boolean isOracleDb(DataSource dataSource) {
+        return dataSource == DataSource.ORACLE_FREE;
     }
 }

@@ -90,8 +90,4 @@ public class StandardSqlDialect implements SqlDialect {
                 FOR UPDATE SKIP LOCKED
                 """.formatted(schemaName, tableName, numMessages);
     }
-
-    protected String getProcessingTimeIndexName(String tableName) {
-        return "%s_processing_time_idx".formatted(tableName);
-    }
 }

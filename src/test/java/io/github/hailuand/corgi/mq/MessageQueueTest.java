@@ -39,23 +39,23 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
     @EnumSource(DataSource.class)
     public void testInitSources(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        assertTableRowCount(0);
-        tearDown(dataSource);
+        assertTableRowCount(dataSource, 0);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
     @EnumSource(DataSource.class)
     public void testPop(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        assertTableRowCount(0);
+        assertTableRowCount(dataSource, 0);
         var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
-        assertTableRowCount(messages.size());
+        assertTableRowCount(dataSource, messages.size());
         try (var conn = this.getConnection()) {
             var pending = this.messageQueue.read(10, conn);
             assertMessages(messages, pending);
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -64,7 +64,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         configure(dataSource);
         var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
-        assertTableRowCount(messages.size());
+        assertTableRowCount(dataSource, messages.size());
         try (var conn = this.getConnection()) {
             var pending = this.messageQueue.read(10, conn);
             assertMessages(messages, pending);
@@ -78,8 +78,13 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         // assert in separate txn
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var rs = st.executeQuery("SELECT * from \"%s\".\"%s\" ORDER BY \"message_time\" ASC"
-                    .formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName()));
+            var query = """
+                    SELECT * from "%s"."%s" ORDER BY "message_time" ASC
+                    """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
+            if (isOracleDb(dataSource)) {
+                query = "SELECT * from %s ORDER BY \"message_time\" ASC".formatted(this.messageQueue.queueTableName());
+            }
+            var rs = st.executeQuery(query);
             Assertions.assertTrue(rs.isBeforeFirst());
             List<Message> processed = new ArrayList<>();
             while (rs.next()) {
@@ -94,7 +99,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 assertEquals(unprocessedMessage, processedMessage);
             }
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -113,7 +118,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 }
             });
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -127,7 +132,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             Assertions.assertTrue(this.messageQueue.read(10, conn).isEmpty());
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -149,11 +154,23 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                         conn -> {
                             try (var st = conn.createStatement()) {
                                 // work on a different table as part of txn
+                                var tableName = """
+                                        "%s"."%s"
+                                        """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
                                 var insertDml = """
-                    INSERT INTO "%s"."%s" VALUES
+                    INSERT INTO %s VALUES
                     (1, 'pembroke welsh'),
                     (2, 'cardigan welsh')
-                    """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
+                    """.formatted(tableName);
+                                if (isOracleDb(dataSource)) {
+                                    tableName = secondaryTableName;
+                                    insertDml = """
+                    INSERT ALL
+                        INTO %s VALUES (1, 'pembroke welsh')
+                        INTO %s VALUES (2, 'cardigan welsh')
+                    SELECT 1 FROM DUAL
+                    """.formatted(tableName, tableName);
+                                }
                                 st.executeUpdate(insertDml);
                                 this.messageQueue.push(messages, conn);
                             } catch (SQLException e) {
@@ -164,7 +181,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             assertMessages(messages, this.messageQueue.read(10, conn));
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -185,11 +202,23 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                         conn -> {
                             try (var st = conn.createStatement()) {
                                 // work on a different table as part of txn
+                                var tableName = """
+                                        "%s"."%s"
+                                        """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
                                 var insertDml = """
-                    INSERT INTO "%s"."%s" VALUES
+                    INSERT INTO %s VALUES
                     (1, 'pembroke welsh'),
                     (2, 'cardigan welsh')
-                    """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
+                    """.formatted(tableName);
+                                if (isOracleDb(dataSource)) {
+                                    tableName = secondaryTableName;
+                                    insertDml = """
+                        INSERT ALL
+                            INTO %s VALUES (1, 'pembroke welsh')
+                            INTO %s VALUES (2, 'cardigan welsh')
+                        SELECT 1 FROM DUAL
+                        """.formatted(tableName, tableName);
+                                }
                                 st.executeUpdate(insertDml);
                                 var messages = List.of(createMessage(), createMessage());
                                 this.messageQueue.push(messages, conn);
@@ -204,7 +233,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             assertMessages(
                     Collections.emptyList(), this.messageQueue.read(10, conn), "failed txn changes not committed");
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -218,12 +247,12 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             assertMessages(messages, result);
         }
         int expectedReadCount = 1;
-        assertAuditMetadata(messages, expectedReadCount);
+        assertAuditMetadata(dataSource, messages, expectedReadCount);
         try (var conn = this.getConnection()) {
             this.messageQueue.read(10, conn);
-            assertAuditMetadata(messages, expectedReadCount + 1);
+            assertAuditMetadata(dataSource, messages, expectedReadCount + 1);
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -233,20 +262,27 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
         try (var conn = this.getConnection()) {
             this.messageQueue.createTableWithSchemaIfNotExists(conn);
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
-    private void assertAuditMetadata(List<Message> expectedMessages, int expectedRowCount) throws SQLException {
+    private void assertAuditMetadata(DataSource dataSource, List<Message> expectedMessages, int expectedRowCount)
+            throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var userRs = st.executeQuery("SELECT CURRENT_USER");
+            var userFunc = (isOracleDb(dataSource)) ? "USER FROM DUAL" : "CURRENT_USER";
+            var userRs = st.executeQuery("SELECT %s".formatted(userFunc));
             userRs.next();
             var expectedUser = userRs.getString(1);
+            var tableName = (isOracleDb(dataSource))
+                    ? this.messageQueue.queueTableName()
+                    : """
+                    "%s"."%s"
+                    """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
             var sql = """
-                    SELECT * FROM "%s"."%s"
+                    SELECT * FROM %s
                     WHERE "read_count" > 0
                     AND "read_by" IS NOT NULL
-                    """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
+                    """.formatted(tableName);
             var rs = st.executeQuery(sql);
             assertTrue(rs.isBeforeFirst());
             var actual = new ArrayList<Message>();

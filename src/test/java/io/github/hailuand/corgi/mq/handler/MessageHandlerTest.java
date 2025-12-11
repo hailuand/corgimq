@@ -22,7 +22,6 @@ package io.github.hailuand.corgi.mq.handler;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
-import io.github.hailuand.corgi.mq.MessageQueue;
 import io.github.hailuand.corgi.mq.model.config.MessageHandlerConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import io.github.hailuand.corgi.mq.model.message.MessageHandlerBatch;
@@ -52,29 +51,29 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
         var handled = new ArrayList<Message>();
-        assertMessagesInTable(messages, false);
+        assertMessagesInTable(dataSource, messages, false);
         listen(dataSource, defaultHandler, batch -> {
             handled.addAll(batch.messages());
             return handled;
         });
-        assertMessagesInTable(messages, true);
+        assertMessagesInTable(dataSource, messages, true);
         handled.clear();
         listen(dataSource, defaultHandler, batch -> {
             handled.addAll(batch.messages());
             return handled;
         });
         assertTrue(handled.isEmpty());
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
     @EnumSource(DataSource.class)
     public void testHandleNoMessages(DataSource dataSource) throws SQLException {
         configure(dataSource);
-        assertTableRowCount(0);
+        assertTableRowCount(dataSource, 0);
         push(dataSource, Collections.emptyList());
-        assertTableRowCount(0);
-        tearDown(dataSource);
+        assertTableRowCount(dataSource, 0);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -86,10 +85,16 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         final var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
         var handled = new ArrayList<Message>();
+        var tableName = """
+                "%s"."%s"
+                """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
+        if (isOracleDb(dataSource)) {
+            tableName = secondaryTableName;
+        }
         var dml = """
-               INSERT INTO "%s"."%s" VALUES
+               INSERT INTO %s VALUES
                 (?, ?)
-                """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
+               """.formatted(tableName);
         var secondaryDataMapping = new HashMap<Integer, String>();
         listen(dataSource, this.messageHandler, batch -> {
             try (var st = batch.transactionConnection().prepareStatement(dml)) {
@@ -107,12 +112,12 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             }
             return handled;
         });
-        assertMessagesInTable(messages, true);
+        assertMessagesInTable(dataSource, messages, true);
         // assert results of other txn
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
-            var rs = st.executeQuery("SELECT * FROM \"%s\".\"%s\" ORDER BY \"id\" ASC"
-                    .formatted(MessageQueue.SCHEMA_NAME, secondaryTableName));
+            var query = "SELECT * FROM %s ORDER BY \"id\" ASC".formatted(tableName);
+            var rs = st.executeQuery(query);
             assertTrue(rs.isBeforeFirst());
 
             while (rs.next()) {
@@ -121,7 +126,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 assertEquals(secondaryDataMapping.get(id), otherData);
             }
         }
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -132,10 +137,16 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         createSecondaryTable(dataSource, secondaryTableName);
         final var messages = List.of(createMessage(), createMessage(), createMessage());
         push(dataSource, messages);
+        var tableName = """
+                "%s"."%s"
+                """.formatted(this.messageQueue.tableSchemaName(), secondaryTableName);
+        if (isOracleDb(dataSource)) {
+            tableName = secondaryTableName;
+        }
         var dml = """
-               INSERT INTO "%s"."%s" VALUES
+               INSERT INTO %s VALUES
                 (?, ?)
-                """.formatted(MessageQueue.SCHEMA_NAME, secondaryTableName);
+               """.formatted(tableName);
         assertThrows(
                 RuntimeException.class,
                 () -> listen(dataSource, this.messageHandler, batch -> {
@@ -156,8 +167,8 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     return handled;
                 }));
         sleepJitterForTransactionPropagation(dataSource);
-        assertMessagesInTable(messages, false); // no messages popped
-        tearDown(dataSource);
+        assertMessagesInTable(dataSource, messages, false); // no messages popped
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -171,7 +182,8 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         assertThrows(
                 RuntimeException.class,
                 () -> listen(dataSource, this.messageHandler, batch -> {
-                    try (var st = batch.transactionConnection().createStatement()) {
+                    try (var conn = batch.transactionConnection()) {
+                        var st = conn.createStatement();
                         var sql = "select * from foobar";
                         st.execute(sql);
                     } catch (SQLException e) {
@@ -179,8 +191,8 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                     }
                     return null;
                 }));
-        assertMessagesInTable(messages, false); // no messages popped
-        tearDown(dataSource);
+        assertMessagesInTable(dataSource, messages, false); // no messages popped
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -208,10 +220,10 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 processed.addAll(batched);
                 return batched;
             });
-            assertMessagesInTable(processed, true);
+            assertMessagesInTable(dataSource, processed, true);
         }
         Assertions.assertTrue(msgsMap.isEmpty());
-        tearDown(dataSource);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -228,10 +240,10 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             Assertions.assertTrue(batch.messages().containsAll(processing));
             return processing;
         });
-        assertMessagesInTable(processing, true);
+        assertMessagesInTable(dataSource, processing, true);
         messages.removeAll(processing);
-        assertMessagesInTable(messages, false);
-        tearDown(dataSource);
+        assertMessagesInTable(dataSource, messages, false);
+        tearDown(dataSource, this.messageQueue);
     }
 
     @ParameterizedTest
@@ -262,16 +274,17 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
         for (var message : threadMessages1) {
             assertFalse(threadMessages2.contains(message));
         }
-        assertMessagesInTable(new ArrayList<>(threadMessages1), true);
-        assertMessagesInTable(new ArrayList<>(threadMessages2), true);
+        assertMessagesInTable(dataSource, new ArrayList<>(threadMessages1), true);
+        assertMessagesInTable(dataSource, new ArrayList<>(threadMessages2), true);
         var unprocessedMessages = messages.stream()
                 .filter(m -> !threadMessages1.contains(m) && !threadMessages2.contains(m))
                 .toList();
-        assertMessagesInTable(unprocessedMessages, false);
-        tearDown(dataSource);
+        assertMessagesInTable(dataSource, unprocessedMessages, false);
+        tearDown(dataSource, this.messageQueue);
     }
 
-    private void assertMessagesInTable(List<Message> messages, boolean processed) throws SQLException {
+    private void assertMessagesInTable(DataSource dataSource, List<Message> messages, boolean processed)
+            throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             var processedClause = "";
@@ -284,14 +297,19 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
             } else {
                 processedClause = "AND \"processing_time\" IS NULL";
             }
+            var tableName = """
+                    "%s"."%s"
+                    """.formatted(this.messageQueue.tableSchemaName(), this.messageQueue.queueTableName());
+            if (isOracleDb(dataSource)) {
+                tableName = this.messageQueue.queueTableName();
+            }
             var sql = """
-                    SELECT * from "%s"."%s"
+                    SELECT * from %s
                     WHERE "id" IN %s
                     %s
                     ORDER BY "message_time" ASC
                     """.formatted(
-                            this.messageQueue.tableSchemaName(),
-                            this.messageQueue.queueTableName(),
+                            tableName,
                             messages.stream()
                                     .map(Message::id)
                                     .map("'%s'"::formatted)

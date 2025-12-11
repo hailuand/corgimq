@@ -40,8 +40,7 @@ import org.slf4j.MDC;
  */
 public class MessageQueue {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueue.class);
-
-    public static final String SCHEMA_NAME = "mq";
+    private static final String SCHEMA_NAME = "mq";
 
     private final MessageQueueConfig messageQueueConfig;
     private final SqlDialect sqlDialect;

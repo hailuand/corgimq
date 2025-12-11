@@ -34,6 +34,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mssqlserver.MSSQLServerContainer;
 import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.oracle.OracleContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -68,12 +69,17 @@ public abstract class DbmsTest {
                     DockerImageName.parse("mcr.microsoft.com/mssql/server").withTag("2022-CU10-ubuntu-22.04"))
             .acceptLicense();
 
+    @Container
+    private static final JdbcDatabaseContainer<?> oracleFree =
+            new OracleContainer(DockerImageName.parse("gvenzl/oracle-free").withTag("23.4-slim-faststart"));
+
     protected void configure(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
         switch (dataSource) {
             case COCKROACHDB -> this.jdbcContainer = cockroachDb;
             case POSTGRES -> this.jdbcContainer = postgres;
             case MYSQL -> this.jdbcContainer = mySql;
             case MSSQL -> this.jdbcContainer = mssql;
+            case ORACLE_FREE -> this.jdbcContainer = oracleFree;
         }
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
@@ -88,13 +94,15 @@ public abstract class DbmsTest {
         return hikariDataSource.getConnection();
     }
 
-    protected void tearDown(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
+    protected void tearDown(AbstractMessageQueueTest.DataSource dataSource, MessageQueue messageQueue)
+            throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             switch (dataSource) {
                 case H2 -> st.execute("DROP ALL OBJECTS");
-                case COCKROACHDB, POSTGRES -> st.execute("DROP SCHEMA %s CASCADE".formatted(MessageQueue.SCHEMA_NAME));
-                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(MessageQueue.SCHEMA_NAME));
+                case COCKROACHDB, POSTGRES ->
+                    st.execute("DROP SCHEMA %s CASCADE".formatted(messageQueue.tableSchemaName()));
+                case MYSQL -> st.execute("DROP SCHEMA %s".formatted(messageQueue.tableSchemaName()));
                 case MSSQL -> {
                     String dropScript = """
         DECLARE @sql NVARCHAR(MAX) = '';
@@ -105,11 +113,26 @@ public abstract class DbmsTest {
         IF @sql <> '' EXEC sp_executesql @sql;
         DROP SCHEMA IF EXISTS [%s];
         """.formatted(
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME,
-                                    MessageQueue.SCHEMA_NAME);
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName(),
+                                    messageQueue.tableSchemaName());
+                    st.execute(dropScript);
+                }
+                case ORACLE_FREE -> {
+                    String dropScript = """
+                DECLARE
+                BEGIN
+                    FOR tbl IN (SELECT table_name FROM user_tables) LOOP
+                        EXECUTE IMMEDIATE 'DROP TABLE "' || tbl.table_name || '" CASCADE CONSTRAINTS';
+                    END LOOP;
+
+                    FOR seq IN (SELECT sequence_name FROM user_sequences) LOOP
+                        EXECUTE IMMEDIATE 'DROP SEQUENCE "' || seq.sequence_name || '"';
+                    END LOOP;
+                END;
+                """;
                     st.execute(dropScript);
                 }
 
@@ -120,17 +143,17 @@ public abstract class DbmsTest {
     }
 
     protected String getUserName(AbstractMessageQueueTest.DataSource dataSource) {
-        return switch (dataSource) {
-            case H2 -> H2_USER_NAME;
-            case COCKROACHDB, MYSQL, POSTGRES, MSSQL -> this.jdbcContainer.getUsername();
-        };
+        if (dataSource == DataSource.H2) {
+            return H2_USER_NAME;
+        }
+        return this.jdbcContainer.getUsername();
     }
 
     protected String getPassword(AbstractMessageQueueTest.DataSource dataSource) {
-        return switch (dataSource) {
-            case H2 -> H2_PASSWORD;
-            case COCKROACHDB, MYSQL, POSTGRES, MSSQL -> this.jdbcContainer.getPassword();
-        };
+        if (dataSource == DataSource.H2) {
+            return H2_PASSWORD;
+        }
+        return this.jdbcContainer.getPassword();
     }
 
     protected String getJdbcUrl(AbstractMessageQueueTest.DataSource dataSource) {
@@ -138,7 +161,7 @@ public abstract class DbmsTest {
             case H2 -> H2_JDBC_URL;
             case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
             case MSSQL -> "%s;quotedIdentifier=on".formatted(this.jdbcContainer.getJdbcUrl());
-            case COCKROACHDB, POSTGRES -> this.jdbcContainer.getJdbcUrl();
+            case COCKROACHDB, POSTGRES, ORACLE_FREE -> this.jdbcContainer.getJdbcUrl();
         };
     }
 
@@ -149,6 +172,7 @@ public abstract class DbmsTest {
             case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
             case MSSQL -> RelationalTestUtil.assertMsSQLPrimaryKeyViolation(exception);
             case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
+            case ORACLE_FREE -> RelationalTestUtil.assertOracleDbPrimaryKeyViolation(exception);
             default -> fail("Not implemented: %s".formatted(dataSource.name()));
         }
     }
@@ -157,7 +181,8 @@ public abstract class DbmsTest {
         H2,
         COCKROACHDB,
         MYSQL,
+        MSSQL,
+        ORACLE_FREE,
         POSTGRES,
-        MSSQL
     }
 }
