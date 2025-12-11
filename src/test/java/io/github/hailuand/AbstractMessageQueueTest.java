@@ -105,7 +105,7 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
                                     secondaryTableName,
                                     messageQueue.tableSchemaName(),
                                     secondaryTableName);
-                case ORACLE_FREE, ORACLE_XE -> ddl = """
+                case ORACLE_FREE -> ddl = """
                 DECLARE
                     table_count NUMBER;
                 BEGIN
@@ -177,6 +177,6 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     }
 
     protected boolean isOracleDb(DataSource dataSource) {
-        return dataSource == DataSource.ORACLE_FREE || dataSource == DataSource.ORACLE_XE;
+        return dataSource == DataSource.ORACLE_FREE;
     }
 }
