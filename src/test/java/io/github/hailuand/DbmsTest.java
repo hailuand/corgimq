@@ -27,7 +27,6 @@ import io.github.hailuand.corgi.mq.MessageQueue;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.TimeUnit;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -60,12 +59,7 @@ public abstract class DbmsTest {
 
     protected void configure(DataSource dataSource) throws SQLException {
         this.jdbcContainer = DatabaseContainers.getContainer(dataSource);
-        HikariConfig hikariConfig = new HikariConfig();
-        hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
-        hikariConfig.setUsername(this.getUserName(dataSource));
-        hikariConfig.setPassword(this.getPassword(dataSource));
-        hikariConfig.setPoolName("CorgiMQ Test Pool");
-        hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(2));
+        HikariConfig hikariConfig = DatabaseContainers.createHikariConfig(dataSource, this.jdbcContainer);
         this.hikariDataSource = new HikariDataSource(hikariConfig);
     }
 
@@ -121,14 +115,14 @@ public abstract class DbmsTest {
     }
 
     protected String getUserName(DataSource dataSource) {
-        if (dataSource == io.github.hailuand.DataSource.H2) {
+        if (dataSource == DataSource.H2) {
             return H2_USER_NAME;
         }
         return this.jdbcContainer.getUsername();
     }
 
     protected String getPassword(DataSource dataSource) {
-        if (dataSource == io.github.hailuand.DataSource.H2) {
+        if (dataSource == DataSource.H2) {
             return H2_PASSWORD;
         }
         return this.jdbcContainer.getPassword();

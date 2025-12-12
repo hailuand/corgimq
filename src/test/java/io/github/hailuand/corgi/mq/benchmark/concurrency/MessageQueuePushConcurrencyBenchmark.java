@@ -17,24 +17,22 @@
  *  under the License.
  */
 
-package io.github.hailuand.corgi.mq.benchmark.throughput;
+package io.github.hailuand.corgi.mq.benchmark.concurrency;
 
+import com.zaxxer.hikari.HikariDataSource;
 import io.github.hailuand.DataSource;
 import io.github.hailuand.DatabaseContainers;
-import io.github.hailuand.DbmsTest;
 import io.github.hailuand.corgi.mq.MessageQueue;
+import io.github.hailuand.corgi.mq.benchmark.BenchmarkUtility;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
-import io.github.hailuand.corgi.mq.sql.dialect.SqlDialectFactory;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import net.datafaker.Faker;
 import org.openjdk.jmh.annotations.*;
+import org.testcontainers.containers.JdbcDatabaseContainer;
 
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -42,63 +40,57 @@ import org.openjdk.jmh.annotations.*;
 @Measurement(iterations = 5, time = 10)
 @Fork(1)
 @State(Scope.Benchmark)
-public class MessageQueueThroughputBenchmark extends DbmsTest {
-    private static final Faker faker = new Faker();
-
+public class MessageQueuePushConcurrencyBenchmark {
     @Param({"H2", "COCKROACHDB", "MYSQL", "MSSQL", "ORACLE_FREE", "POSTGRES"})
     private DataSource dataSource;
 
-    @Param({"100000", "1000000"})
+    @Param({"10", "50", "100"})
     private int batchSize;
 
-    private Connection conn;
+    @Param({"2", "4", "6", "8", "10"})
+    private int threads;
+
+    private HikariDataSource pool;
     private MessageQueue queue;
-    private List<Message> messages;
 
     @Setup(Level.Trial)
     public void setupTrial() throws SQLException {
+        JdbcDatabaseContainer<?> container = null;
         if (dataSource != DataSource.H2) {
-            var jdbcContainer = Objects.requireNonNull(DatabaseContainers.getContainer(dataSource));
-            jdbcContainer.start();
+            container = Objects.requireNonNull(DatabaseContainers.getContainer(dataSource));
+            container.start();
         }
-        configure(dataSource);
-        conn = getConnection();
-        queue = MessageQueue.of(
-                MessageQueueConfig.of("Benchmark_%s".formatted(faker.random().hex())), conn);
-        queue.createTableWithSchemaIfNotExists(conn);
-    }
-
-    @Setup(Level.Iteration)
-    public void setupIteration() {
-        messages = createMessages(batchSize);
-    }
-
-    @TearDown(Level.Invocation)
-    public void tearDownIteration() throws SQLException {
-        var dialect = SqlDialectFactory.fromConnection(conn);
-        try (PreparedStatement stmt =
-                conn.prepareStatement(dialect.truncateTableDml(queue.tableSchemaName(), queue.queueTableName()))) {
-            stmt.execute();
-        }
-    }
-
-    @TearDown(Level.Trial)
-    public void tearDownTrial() throws SQLException {
-        if (conn != null && !conn.isClosed()) {
-            conn.close();
+        var config = DatabaseContainers.createHikariConfig(dataSource, container);
+        config.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(10));
+        pool = new HikariDataSource(config);
+        try (var conn = pool.getConnection()) {
+            queue = MessageQueue.of(MessageQueueConfig.of(BenchmarkUtility.createQueueName("push")), conn);
+            queue.createTableWithSchemaIfNotExists(conn);
         }
     }
 
     @Benchmark
-    public void benchmarkPushMessages() throws SQLException {
-        queue.push(messages, conn);
+    @Threads(Threads.MAX)
+    public void benchmarkPushConcurrency(ThreadState state) throws SQLException {
+        queue.push(state.messages, state.threadConn);
     }
 
-    private List<Message> createMessages(int count) {
-        var messages = new ArrayList<Message>();
-        for (int i = 0; i < count; i++) {
-            messages.add(Message.of(faker.json()));
+    @State(Scope.Thread)
+    public static class ThreadState {
+        Connection threadConn;
+        List<Message> messages;
+
+        @Setup(Level.Invocation)
+        public void setupIteration(MessageQueuePushConcurrencyBenchmark parent) throws SQLException {
+            messages = BenchmarkUtility.createMessages(parent.batchSize);
+            threadConn = parent.pool.getConnection();
         }
-        return messages;
+
+        @TearDown(Level.Invocation)
+        public void tearDownIteration() throws SQLException {
+            if (threadConn != null && !threadConn.isClosed()) {
+                threadConn.close();
+            }
+        }
     }
 }

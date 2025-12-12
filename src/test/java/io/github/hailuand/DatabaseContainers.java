@@ -19,6 +19,8 @@
 
 package io.github.hailuand;
 
+import com.zaxxer.hikari.HikariConfig;
+import java.util.concurrent.TimeUnit;
 import org.testcontainers.cockroachdb.CockroachContainer;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.mssqlserver.MSSQLServerContainer;
@@ -28,6 +30,11 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 public class DatabaseContainers {
+    private static final String H2_JDBC_URL =
+            "jdbc:h2:mem:TEST_DB;DATABASE_TO_UPPER=false;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
+    private static final String H2_USER_NAME = "sa";
+    private static final String H2_PASSWORD = "";
+
     private DatabaseContainers() {}
 
     public static final JdbcDatabaseContainer<?> POSTGRES =
@@ -58,5 +65,32 @@ public class DatabaseContainers {
             case MSSQL -> MSSQL;
             case ORACLE_FREE -> ORACLE;
         };
+    }
+
+    public static HikariConfig createHikariConfig(DataSource dataSource, JdbcDatabaseContainer<?> container) {
+        String userName, password, jdbcUrl;
+        if (dataSource == DataSource.H2) {
+            userName = H2_USER_NAME;
+            password = H2_PASSWORD;
+            jdbcUrl = H2_JDBC_URL;
+        } else {
+            jdbcUrl = container.getJdbcUrl();
+            userName = container.getUsername();
+            password = container.getPassword();
+
+            switch (dataSource) {
+                case MYSQL -> jdbcUrl = "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(jdbcUrl);
+                case MSSQL -> jdbcUrl = "%s;quotedIdentifier=on".formatted(jdbcUrl);
+            }
+        }
+
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(jdbcUrl);
+        hikariConfig.setUsername(userName);
+        hikariConfig.setPassword(password);
+        hikariConfig.setPoolName("CorgiMQ Test Pool");
+        hikariConfig.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(2));
+
+        return hikariConfig;
     }
 }
