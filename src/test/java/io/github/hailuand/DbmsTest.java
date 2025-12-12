@@ -114,29 +114,6 @@ public abstract class DbmsTest {
         this.hikariDataSource.close();
     }
 
-    protected String getUserName(DataSource dataSource) {
-        if (dataSource == DataSource.H2) {
-            return H2_USER_NAME;
-        }
-        return this.jdbcContainer.getUsername();
-    }
-
-    protected String getPassword(DataSource dataSource) {
-        if (dataSource == DataSource.H2) {
-            return H2_PASSWORD;
-        }
-        return this.jdbcContainer.getPassword();
-    }
-
-    protected String getJdbcUrl(DataSource dataSource) {
-        return switch (dataSource) {
-            case H2 -> H2_JDBC_URL;
-            case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
-            case MSSQL -> "%s;quotedIdentifier=on".formatted(this.jdbcContainer.getJdbcUrl());
-            case COCKROACHDB, POSTGRES, ORACLE_FREE -> this.jdbcContainer.getJdbcUrl();
-        };
-    }
-
     protected void assertUniquePrimaryKeyViolation(DataSource dataSource, SQLException exception) {
         switch (dataSource) {
             case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
