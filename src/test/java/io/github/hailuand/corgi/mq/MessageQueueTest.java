@@ -22,6 +22,7 @@ package io.github.hailuand.corgi.mq;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
+import io.github.hailuand.DataSource;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;

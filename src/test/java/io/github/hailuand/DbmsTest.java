@@ -28,15 +28,9 @@ import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
-import org.testcontainers.cockroachdb.CockroachContainer;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.mssqlserver.MSSQLServerContainer;
-import org.testcontainers.mysql.MySQLContainer;
-import org.testcontainers.oracle.OracleContainer;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
 public abstract class DbmsTest {
@@ -50,37 +44,22 @@ public abstract class DbmsTest {
     private HikariDataSource hikariDataSource;
 
     @Container
-    private static final JdbcDatabaseContainer<?> postgres =
-            new PostgreSQLContainer(DockerImageName.parse("postgres").withTag("16.2"));
+    private static final JdbcDatabaseContainer<?> postgres = DatabaseContainers.POSTGRES;
 
     @Container
-    private static final JdbcDatabaseContainer<?> mySql = new MySQLContainer(
-                    DockerImageName.parse("mysql").withTag("8.3.0"))
-            .withUsername("root")
-            .withPassword("")
-            .withEnv("MYSQL_ROOT_HOST", "%");
+    private static final JdbcDatabaseContainer<?> mySql = DatabaseContainers.MYSQL;
 
     @Container
-    private static final JdbcDatabaseContainer<?> cockroachDb = new CockroachContainer(
-            DockerImageName.parse("cockroachdb/cockroach").withTag("v23.1.16"));
+    private static final JdbcDatabaseContainer<?> cockroachDb = DatabaseContainers.COCKROACHDB;
 
     @Container
-    private static final JdbcDatabaseContainer<?> mssql = new MSSQLServerContainer(
-                    DockerImageName.parse("mcr.microsoft.com/mssql/server").withTag("2022-CU10-ubuntu-22.04"))
-            .acceptLicense();
+    private static final JdbcDatabaseContainer<?> mssql = DatabaseContainers.MSSQL;
 
     @Container
-    private static final JdbcDatabaseContainer<?> oracleFree =
-            new OracleContainer(DockerImageName.parse("gvenzl/oracle-free").withTag("23.4-slim-faststart"));
+    private static final JdbcDatabaseContainer<?> oracleFree = DatabaseContainers.ORACLE;
 
-    protected void configure(AbstractMessageQueueTest.DataSource dataSource) throws SQLException {
-        switch (dataSource) {
-            case COCKROACHDB -> this.jdbcContainer = cockroachDb;
-            case POSTGRES -> this.jdbcContainer = postgres;
-            case MYSQL -> this.jdbcContainer = mySql;
-            case MSSQL -> this.jdbcContainer = mssql;
-            case ORACLE_FREE -> this.jdbcContainer = oracleFree;
-        }
+    protected void configure(DataSource dataSource) throws SQLException {
+        this.jdbcContainer = DatabaseContainers.getContainer(dataSource);
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(this.getJdbcUrl(dataSource));
         hikariConfig.setUsername(this.getUserName(dataSource));
@@ -94,8 +73,7 @@ public abstract class DbmsTest {
         return hikariDataSource.getConnection();
     }
 
-    protected void tearDown(AbstractMessageQueueTest.DataSource dataSource, MessageQueue messageQueue)
-            throws SQLException {
+    protected void tearDown(DataSource dataSource, MessageQueue messageQueue) throws SQLException {
         try (var conn = this.getConnection();
                 var st = conn.createStatement()) {
             switch (dataSource) {
@@ -142,21 +120,21 @@ public abstract class DbmsTest {
         this.hikariDataSource.close();
     }
 
-    protected String getUserName(AbstractMessageQueueTest.DataSource dataSource) {
-        if (dataSource == DataSource.H2) {
+    protected String getUserName(DataSource dataSource) {
+        if (dataSource == io.github.hailuand.DataSource.H2) {
             return H2_USER_NAME;
         }
         return this.jdbcContainer.getUsername();
     }
 
-    protected String getPassword(AbstractMessageQueueTest.DataSource dataSource) {
-        if (dataSource == DataSource.H2) {
+    protected String getPassword(DataSource dataSource) {
+        if (dataSource == io.github.hailuand.DataSource.H2) {
             return H2_PASSWORD;
         }
         return this.jdbcContainer.getPassword();
     }
 
-    protected String getJdbcUrl(AbstractMessageQueueTest.DataSource dataSource) {
+    protected String getJdbcUrl(DataSource dataSource) {
         return switch (dataSource) {
             case H2 -> H2_JDBC_URL;
             case MYSQL -> "%s?sessionVariables=sql_mode=ANSI_QUOTES".formatted(this.jdbcContainer.getJdbcUrl());
@@ -165,8 +143,7 @@ public abstract class DbmsTest {
         };
     }
 
-    protected void assertUniquePrimaryKeyViolation(
-            AbstractMessageQueueTest.DataSource dataSource, SQLException exception) {
+    protected void assertUniquePrimaryKeyViolation(DataSource dataSource, SQLException exception) {
         switch (dataSource) {
             case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
             case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
@@ -175,14 +152,5 @@ public abstract class DbmsTest {
             case ORACLE_FREE -> RelationalTestUtil.assertOracleDbPrimaryKeyViolation(exception);
             default -> fail("Not implemented: %s".formatted(dataSource.name()));
         }
-    }
-
-    public enum DataSource {
-        H2,
-        COCKROACHDB,
-        MYSQL,
-        MSSQL,
-        ORACLE_FREE,
-        POSTGRES,
     }
 }

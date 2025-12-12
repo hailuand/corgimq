@@ -165,7 +165,7 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     }
 
     protected void sleepJitterForTransactionPropagation(DataSource dataSource) {
-        if (dataSource == DataSource.COCKROACHDB) {
+        if (dataSource == io.github.hailuand.DataSource.COCKROACHDB) {
             // CockroachDB operates on consensus protocol - querying 1ms after committing txn may result in
             // undesired but not incorrect behavior as rows may still be locked
             try {
@@ -177,6 +177,6 @@ public abstract class AbstractMessageQueueTest extends DbmsTest {
     }
 
     protected boolean isOracleDb(DataSource dataSource) {
-        return dataSource == DataSource.ORACLE_FREE;
+        return dataSource == io.github.hailuand.DataSource.ORACLE_FREE;
     }
 }

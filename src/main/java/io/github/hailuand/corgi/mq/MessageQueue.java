@@ -53,8 +53,7 @@ public class MessageQueue {
      * @throws SQLException If database connection unavailable
      */
     public static MessageQueue of(MessageQueueConfig messageQueueConfig, Connection conn) throws SQLException {
-        var dialectFactory = new SqlDialectFactory();
-        return new MessageQueue(messageQueueConfig, dialectFactory.createSqlDialect(conn));
+        return new MessageQueue(messageQueueConfig, SqlDialectFactory.fromConnection(conn));
     }
 
     /**

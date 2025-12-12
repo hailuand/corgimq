@@ -65,6 +65,8 @@
         <h2.version>2.4.240</h2.version>
         <!-- datafaker -->
         <datafaker.version>2.5.3</datafaker.version>
+        <!-- java microbenchmark harness -->
+        <jmh.version>1.37</jmh.version>
         <!-- jacoco -->
         <jacoco.version>0.8.14</jacoco.version>
         <!-- maven plugins -->
@@ -183,6 +185,18 @@
             <version>${datafaker.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- TEST CONTAINERS -->
         <dependency>
@@ -239,6 +253,11 @@
                             <groupId>org.immutables</groupId>
                             <artifactId>value</artifactId>
                             <version>${immutables.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.openjdk.jmh</groupId>
+                            <artifactId>jmh-generator-annprocess</artifactId>
+                            <version>${jmh.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -302,6 +321,7 @@
                         <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.microsoft.sqlserver:mssql-jdbc</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.oracle.database.jdbc:ojdbc11</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>org.openjdk.jmh:jmh-generator-annprocess</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                 </configuration>
                 <executions>

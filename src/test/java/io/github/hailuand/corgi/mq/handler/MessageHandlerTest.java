@@ -22,6 +22,7 @@ package io.github.hailuand.corgi.mq.handler;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
+import io.github.hailuand.DataSource;
 import io.github.hailuand.corgi.mq.model.config.MessageHandlerConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import io.github.hailuand.corgi.mq.model.message.MessageHandlerBatch;
