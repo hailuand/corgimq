@@ -40,7 +40,7 @@ import org.testcontainers.containers.JdbcDatabaseContainer;
 @Measurement(iterations = 5, time = 10)
 @Fork(1)
 @State(Scope.Benchmark)
-public class MessageQueuePushConcurrencyBenchmark {
+public class MessageQueuePopConcurrencyBenchmark {
     @Param({"H2", "COCKROACHDB", "MYSQL", "MSSQL", "ORACLE_FREE", "POSTGRES"})
     private DataSource dataSource;
 
@@ -72,7 +72,7 @@ public class MessageQueuePushConcurrencyBenchmark {
     @Benchmark
     @Threads(Threads.MAX)
     public void benchmarkPushConcurrency(ThreadState state) throws SQLException {
-        queue.push(state.messages, state.threadConn);
+        queue.pop(state.messages, state.threadConn);
     }
 
     @State(Scope.Thread)
@@ -81,9 +81,10 @@ public class MessageQueuePushConcurrencyBenchmark {
         List<Message> messages;
 
         @Setup(Level.Invocation)
-        public void setupInvocation(MessageQueuePushConcurrencyBenchmark parent) throws SQLException {
+        public void setupInvocation(MessageQueuePopConcurrencyBenchmark parent) throws SQLException {
             messages = BenchmarkUtility.createMessages(parent.batchSize);
             threadConn = parent.pool.getConnection();
+            parent.queue.push(messages, threadConn);
         }
 
         @TearDown(Level.Invocation)

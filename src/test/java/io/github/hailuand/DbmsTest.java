@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.hailuand.corgi.mq.MessageQueue;
-import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import java.sql.Connection;
 import java.sql.SQLException;
 import org.testcontainers.containers.JdbcDatabaseContainer;
@@ -33,13 +32,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
 public abstract class DbmsTest {
-    private static final String H2_JDBC_URL =
-            "jdbc:h2:mem:TEST_DB;DATABASE_TO_UPPER=false;BUILTIN_ALIAS_OVERRIDE=TRUE;DB_CLOSE_DELAY=-1";
-    private static final String H2_USER_NAME = "sa";
-    private static final String H2_PASSWORD = "";
-
-    private JdbcDatabaseContainer<?> jdbcContainer;
-    protected MessageQueueConfig mqConfig;
     private HikariDataSource hikariDataSource;
 
     @Container
@@ -58,13 +50,13 @@ public abstract class DbmsTest {
     private static final JdbcDatabaseContainer<?> oracleFree = DatabaseContainers.ORACLE;
 
     protected void configure(DataSource dataSource) throws SQLException {
-        this.jdbcContainer = DatabaseContainers.getContainer(dataSource);
-        HikariConfig hikariConfig = DatabaseContainers.createHikariConfig(dataSource, this.jdbcContainer);
+        JdbcDatabaseContainer<?> jdbcContainer = DatabaseContainers.getContainer(dataSource);
+        HikariConfig hikariConfig = DatabaseContainers.createHikariConfig(dataSource, jdbcContainer);
         this.hikariDataSource = new HikariDataSource(hikariConfig);
     }
 
     protected Connection getConnection() throws SQLException {
-        return hikariDataSource.getConnection();
+        return this.hikariDataSource.getConnection();
     }
 
     protected void tearDown(DataSource dataSource, MessageQueue messageQueue) throws SQLException {
@@ -112,16 +104,5 @@ public abstract class DbmsTest {
             }
         }
         this.hikariDataSource.close();
-    }
-
-    protected void assertUniquePrimaryKeyViolation(DataSource dataSource, SQLException exception) {
-        switch (dataSource) {
-            case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
-            case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
-            case MSSQL -> RelationalTestUtil.assertMsSQLPrimaryKeyViolation(exception);
-            case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
-            case ORACLE_FREE -> RelationalTestUtil.assertOracleDbPrimaryKeyViolation(exception);
-            default -> fail("Not implemented: %s".formatted(dataSource.name()));
-        }
     }
 }

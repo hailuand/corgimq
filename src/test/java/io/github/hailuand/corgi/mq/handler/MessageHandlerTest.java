@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
 import io.github.hailuand.DataSource;
+import io.github.hailuand.RelationalTestUtil;
 import io.github.hailuand.corgi.mq.model.config.MessageHandlerConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import io.github.hailuand.corgi.mq.model.message.MessageHandlerBatch;
@@ -162,7 +163,7 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                         }
                         st.executeBatch();
                     } catch (SQLException e) {
-                        assertUniquePrimaryKeyViolation(dataSource, e);
+                        RelationalTestUtil.assertUniquePrimaryKeyViolation(dataSource, e);
                         throw new RuntimeException(e);
                     }
                     return handled;
