@@ -76,6 +76,7 @@
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <maven.release.plugin.version>3.3.0</maven.release.plugin.version>
         <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
+        <maven.exec.plugin.version>3.6.2</maven.exec.plugin.version>
         <!-- test containers -->
         <testcontainers.version>2.0.2</testcontainers.version>
         <!-- hikaricp -->
@@ -404,6 +405,30 @@
                     </checkModificationExcludes>
                     <releaseProfiles>release</releaseProfiles>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${maven.exec.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>run-benchmarks</id>
+                        <phase>integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>java</executable>
+                            <classpathScope>test</classpathScope>
+                            <arguments>
+                                <argument>-classpath</argument>
+                                <classpath/>
+                                <argument>-Dlog4j2.configurationFile=log4j2-benchmark.properties</argument>
+                                <argument>org.openjdk.jmh.Main</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
