@@ -18,7 +18,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       - name: Run benchmarks
-        run: mvn clean integration-test -DskipTests
+        run: mvn clean integration-test -Pbenchmark -DskipTests
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
