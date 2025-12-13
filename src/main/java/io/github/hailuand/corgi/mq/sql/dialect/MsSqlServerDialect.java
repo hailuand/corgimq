@@ -114,4 +114,11 @@ public class MsSqlServerDialect implements SqlDialect {
                 ORDER BY [message_time] ASC
                 """.formatted(numMessages, schemaName, tableName);
     }
+
+    @Override
+    public String truncateTableDml(String schemaName, String tableName) {
+        return """
+            TRUNCATE TABLE [%s].[%s]
+            """.formatted(schemaName, tableName);
+    }
 }

@@ -22,6 +22,8 @@ package io.github.hailuand.corgi.mq;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
+import io.github.hailuand.DataSource;
+import io.github.hailuand.RelationalTestUtil;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -113,7 +115,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 try {
                     this.messageQueue.push(messages, conn);
                 } catch (SQLException e) {
-                    assertUniquePrimaryKeyViolation(dataSource, e);
+                    RelationalTestUtil.assertUniquePrimaryKeyViolation(dataSource, e);
                     throw e;
                 }
             });
@@ -224,7 +226,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 this.messageQueue.push(messages, conn);
                                 this.messageQueue.push(messages, conn); // trigger pk constraint violation
                             } catch (SQLException e) {
-                                assertUniquePrimaryKeyViolation(dataSource, e);
+                                RelationalTestUtil.assertUniquePrimaryKeyViolation(dataSource, e);
                                 throw new RuntimeException(e);
                             }
                         }));

@@ -69,6 +69,11 @@ public class MySqlDialect extends StandardSqlDialect {
         return handleMySqlIdentifiers(super.readMessagesDql(schemaName, tableName, numMessages));
     }
 
+    @Override
+    public String truncateTableDml(String schemaName, String tableName) {
+        return handleMySqlIdentifiers(super.truncateTableDml(schemaName, tableName));
+    }
+
     private String handleMySqlIdentifiers(String sql) {
         return sql.replace('\"', '`');
     }

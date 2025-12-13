@@ -114,4 +114,11 @@ public class OracleDbDialect implements SqlDialect {
                 FOR UPDATE SKIP LOCKED
                 """.formatted(tableName, tableName, numMessages);
     }
+
+    @Override
+    public String truncateTableDml(String schemaName, String tableName) {
+        return """
+            TRUNCATE TABLE %s
+            """.formatted(tableName);
+    }
 }

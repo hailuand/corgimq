@@ -65,6 +65,8 @@
         <h2.version>2.4.240</h2.version>
         <!-- datafaker -->
         <datafaker.version>2.5.3</datafaker.version>
+        <!-- java microbenchmark harness -->
+        <jmh.version>1.37</jmh.version>
         <!-- jacoco -->
         <jacoco.version>0.8.14</jacoco.version>
         <!-- maven plugins -->
@@ -74,6 +76,7 @@
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <maven.release.plugin.version>3.3.0</maven.release.plugin.version>
         <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
+        <maven.exec.plugin.version>3.6.2</maven.exec.plugin.version>
         <!-- test containers -->
         <testcontainers.version>2.0.2</testcontainers.version>
         <!-- hikaricp -->
@@ -183,6 +186,18 @@
             <version>${datafaker.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- TEST CONTAINERS -->
         <dependency>
@@ -239,6 +254,11 @@
                             <groupId>org.immutables</groupId>
                             <artifactId>value</artifactId>
                             <version>${immutables.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.openjdk.jmh</groupId>
+                            <artifactId>jmh-generator-annprocess</artifactId>
+                            <version>${jmh.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -302,6 +322,7 @@
                         <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-slf4j2-impl</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.microsoft.sqlserver:mssql-jdbc</ignoredUnusedDeclaredDependency>
                         <ignoredUnusedDeclaredDependency>com.oracle.database.jdbc:ojdbc11</ignoredUnusedDeclaredDependency>
+                        <ignoredUnusedDeclaredDependency>org.openjdk.jmh:jmh-generator-annprocess</ignoredUnusedDeclaredDependency>
                     </ignoredUnusedDeclaredDependencies>
                 </configuration>
                 <executions>
@@ -408,6 +429,41 @@
                                         <arg>--pinentry-mode</arg>
                                         <arg>loopback</arg>
                                     </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>benchmark</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${maven.exec.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>run-benchmarks</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>java</executable>
+                                    <classpathScope>test</classpathScope>
+                                    <arguments>
+                                        <argument>-classpath</argument>
+                                        <classpath/>
+                                        <argument>-Dlog4j2.configurationFile=log4j2-benchmark.properties</argument>
+                                        <argument>org.openjdk.jmh.Main</argument>
+                                        <argument>-rf</argument>
+                                        <argument>json</argument>
+                                        <argument>-rff</argument>
+                                        <argument>target/jmh-results.json</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>

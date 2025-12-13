@@ -23,7 +23,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class SqlDialectFactory {
-    public SqlDialect createSqlDialect(Connection conn) throws SQLException {
+    private SqlDialectFactory() {}
+
+    public static SqlDialect fromConnection(Connection conn) throws SQLException {
         String dbProduct = conn.getMetaData().getDatabaseProductName();
         return switch (dbProduct) {
             case "MySQL" -> new MySqlDialect();
