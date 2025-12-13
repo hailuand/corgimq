@@ -425,6 +425,10 @@
                                 <classpath/>
                                 <argument>-Dlog4j2.configurationFile=log4j2-benchmark.properties</argument>
                                 <argument>org.openjdk.jmh.Main</argument>
+                                <argument>-rf</argument>
+                                <argument>json</argument>
+                                <argument>-rff</argument>
+                                <argument>target/jmh-results.json</argument>
                             </arguments>
                         </configuration>
                     </execution>
