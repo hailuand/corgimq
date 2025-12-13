@@ -17,28 +17,27 @@
  *  under the License.
  */
 
-package io.github.hailuand.corgi.mq.sql.dialect;
+package io.github.hailuand.corgi.mq.benchmark;
 
-public interface SqlDialect {
-    String schemaDdl(String schemaName);
+import io.github.hailuand.corgi.mq.model.message.Message;
+import java.util.ArrayList;
+import java.util.List;
+import net.datafaker.Faker;
 
-    String tableDdl(String schemaName, String tableName);
+public final class BenchmarkUtility {
+    private BenchmarkUtility() {}
 
-    String indexDdl(String schemaName, String tableName);
+    private static final Faker faker = new Faker();
 
-    String checkIndexExistenceDql(String schemaName, String tableName);
+    public static String createQueueName(String behaviorBenchmarking) {
+        return "benchmark_%s_%s".formatted(behaviorBenchmarking, faker.random().hex());
+    }
 
-    String pushMessagesDml(String schemaName, String tableName);
-
-    String popMessagesDml(String schemaName, String tableName);
-
-    String updateReadCountDml(String schemaName, String tableName);
-
-    String readMessagesDql(String schemaName, String tableName, int numMessages);
-
-    String truncateTableDml(String schemaName, String tableName);
-
-    default String getProcessingTimeIndexName(String tableName) {
-        return "%s_processing_time_idx".formatted(tableName);
+    public static List<Message> createMessages(int count) {
+        var messages = new ArrayList<Message>();
+        for (int i = 0; i < count; i++) {
+            messages.add(Message.of(faker.json()));
+        }
+        return messages;
     }
 }

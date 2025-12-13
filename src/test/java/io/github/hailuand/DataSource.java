@@ -17,28 +17,13 @@
  *  under the License.
  */
 
-package io.github.hailuand.corgi.mq.sql.dialect;
+package io.github.hailuand;
 
-public interface SqlDialect {
-    String schemaDdl(String schemaName);
-
-    String tableDdl(String schemaName, String tableName);
-
-    String indexDdl(String schemaName, String tableName);
-
-    String checkIndexExistenceDql(String schemaName, String tableName);
-
-    String pushMessagesDml(String schemaName, String tableName);
-
-    String popMessagesDml(String schemaName, String tableName);
-
-    String updateReadCountDml(String schemaName, String tableName);
-
-    String readMessagesDql(String schemaName, String tableName, int numMessages);
-
-    String truncateTableDml(String schemaName, String tableName);
-
-    default String getProcessingTimeIndexName(String tableName) {
-        return "%s_processing_time_idx".formatted(tableName);
-    }
+public enum DataSource {
+    H2,
+    COCKROACHDB,
+    MYSQL,
+    MSSQL,
+    ORACLE_FREE,
+    POSTGRES,
 }

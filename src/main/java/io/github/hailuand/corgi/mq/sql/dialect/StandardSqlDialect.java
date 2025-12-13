@@ -90,4 +90,11 @@ public class StandardSqlDialect implements SqlDialect {
                 FOR UPDATE SKIP LOCKED
                 """.formatted(schemaName, tableName, numMessages);
     }
+
+    @Override
+    public String truncateTableDml(String schemaName, String tableName) {
+        return """
+                TRUNCATE TABLE "%s"."%s"
+                """.formatted(schemaName, tableName);
+    }
 }

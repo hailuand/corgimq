@@ -34,21 +34,32 @@ public final class RelationalTestUtil {
     private static final String INTEGRITY_VIOLATION_SQL_STATE = "23000";
     private static final int MSSQL_INTEGRITY_VIOLATION_ERROR_CODE = 2627;
 
-    public static void assertH2PrimaryKeyViolation(SQLException exception) {
+    public static void assertUniquePrimaryKeyViolation(DataSource dataSource, SQLException exception) {
+        switch (dataSource) {
+            case H2 -> RelationalTestUtil.assertH2PrimaryKeyViolation(exception);
+            case MYSQL -> RelationalTestUtil.assertMySQLPrimaryKeyViolation(exception);
+            case MSSQL -> RelationalTestUtil.assertMsSQLPrimaryKeyViolation(exception);
+            case COCKROACHDB, POSTGRES -> RelationalTestUtil.assertPostgresPrimaryKeyViolation(exception);
+            case ORACLE_FREE -> RelationalTestUtil.assertOracleDbPrimaryKeyViolation(exception);
+            default -> fail("Not implemented: %s".formatted(dataSource.name()));
+        }
+    }
+
+    private static void assertH2PrimaryKeyViolation(SQLException exception) {
         assertNotNull(exception.getNextException());
         var h2Exception = exception.getNextException();
         assertInstanceOf(JdbcSQLIntegrityConstraintViolationException.class, h2Exception);
         assertEquals(ErrorCode.DUPLICATE_KEY_1, Integer.parseInt(h2Exception.getSQLState()), "unique violation");
     }
 
-    public static void assertMySQLPrimaryKeyViolation(SQLException sqlException) {
+    private static void assertMySQLPrimaryKeyViolation(SQLException sqlException) {
         assertInstanceOf(BatchUpdateException.class, sqlException);
         assertEquals(MysqlErrorNumbers.SQLSTATE_INTEGRITY_CONSTRAINT_VIOLATION_NO_SUBCLASS, sqlException.getSQLState());
         assertNotNull(sqlException.getCause());
         assertInstanceOf(SQLIntegrityConstraintViolationException.class, sqlException.getCause());
     }
 
-    public static void assertMsSQLPrimaryKeyViolation(SQLException sqlException) {
+    private static void assertMsSQLPrimaryKeyViolation(SQLException sqlException) {
         assertInstanceOf(BatchUpdateException.class, sqlException);
         assertEquals(INTEGRITY_VIOLATION_SQL_STATE, sqlException.getSQLState(), "PKey violation error state");
         assertEquals(MSSQL_INTEGRITY_VIOLATION_ERROR_CODE, sqlException.getErrorCode(), "PKey violation error code");
@@ -56,14 +67,14 @@ public final class RelationalTestUtil {
         assertTrue(sqlException.getMessage().contains("Cannot insert duplicate key"));
     }
 
-    public static void assertPostgresPrimaryKeyViolation(SQLException sqlException) {
+    private static void assertPostgresPrimaryKeyViolation(SQLException sqlException) {
         assertNotNull(sqlException.getNextException());
         var psqlException = sqlException.getNextException();
         assertInstanceOf(PSQLException.class, psqlException);
         assertEquals(PSQLState.UNIQUE_VIOLATION.getState(), psqlException.getSQLState());
     }
 
-    public static void assertOracleDbPrimaryKeyViolation(SQLException sqlException) {
+    private static void assertOracleDbPrimaryKeyViolation(SQLException sqlException) {
         assertInstanceOf(BatchUpdateException.class, sqlException);
         assertNotNull(sqlException.getNextException());
         assertEquals(INTEGRITY_VIOLATION_SQL_STATE, sqlException.getSQLState());

@@ -22,7 +22,10 @@ package io.github.hailuand.corgi.mq;
 import static org.junit.jupiter.api.Assertions.*;
 
 import io.github.hailuand.AbstractMessageQueueTest;
+import io.github.hailuand.DataSource;
+import io.github.hailuand.RelationalTestUtil;
 import io.github.hailuand.corgi.mq.model.message.Message;
+import io.github.hailuand.corgi.mq.sql.dialect.SqlDialectFactory;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,7 +116,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                 try {
                     this.messageQueue.push(messages, conn);
                 } catch (SQLException e) {
-                    assertUniquePrimaryKeyViolation(dataSource, e);
+                    RelationalTestUtil.assertUniquePrimaryKeyViolation(dataSource, e);
                     throw e;
                 }
             });
@@ -224,7 +227,7 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
                                 this.messageQueue.push(messages, conn);
                                 this.messageQueue.push(messages, conn); // trigger pk constraint violation
                             } catch (SQLException e) {
-                                assertUniquePrimaryKeyViolation(dataSource, e);
+                                RelationalTestUtil.assertUniquePrimaryKeyViolation(dataSource, e);
                                 throw new RuntimeException(e);
                             }
                         }));
@@ -263,6 +266,21 @@ public class MessageQueueTest extends AbstractMessageQueueTest {
             this.messageQueue.createTableWithSchemaIfNotExists(conn);
         }
         tearDown(dataSource, this.messageQueue);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testTruncateTable(DataSource dataSource) throws SQLException {
+        configure(dataSource);
+        var messages = createMessages(5);
+        push(dataSource, messages);
+        assertTableRowCount(dataSource, messages.size());
+        try (var conn = this.getConnection();
+                var st = conn.createStatement()) {
+            var dialect = SqlDialectFactory.fromConnection(conn);
+            st.execute(dialect.truncateTableDml(messageQueue.tableSchemaName(), messageQueue.queueTableName()));
+        }
+        assertTableRowCount(dataSource, 0);
     }
 
     private void assertAuditMetadata(DataSource dataSource, List<Message> expectedMessages, int expectedRowCount)
