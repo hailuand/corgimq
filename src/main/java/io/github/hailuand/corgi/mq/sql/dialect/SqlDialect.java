@@ -39,6 +39,6 @@ public interface SqlDialect {
     String truncateTableDml(String schemaName, String tableName);
 
     default String getProcessingTimeIndexName(String tableName) {
-        return "%s_processing_time_idx".formatted(tableName);
+        return "%s_ptime_mtime_idx".formatted(tableName);
     }
 }

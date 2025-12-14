@@ -56,7 +56,7 @@ public class MsSqlServerDialect implements SqlDialect {
                     WHERE name = '%s' AND object_id = OBJECT_ID('[%s].[%s]'))
                 BEGIN
                     CREATE INDEX [%s]
-                    ON [%s].[%s] ([processing_time])
+                    ON [%s].[%s] ([processing_time], [message_time])
                 END
                 """.formatted(
                         getProcessingTimeIndexName(tableName),

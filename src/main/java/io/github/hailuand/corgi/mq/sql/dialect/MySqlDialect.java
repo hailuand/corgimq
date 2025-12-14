@@ -34,7 +34,7 @@ public class MySqlDialect extends StandardSqlDialect {
     public String indexDdl(String schemaName, String tableName) {
         return handleMySqlIdentifiers("""
                 CREATE INDEX "%s"
-                ON "%s"."%s" ("processing_time")
+                ON "%s"."%s" ("processing_time", "message_time")
                 """.formatted(getProcessingTimeIndexName(tableName), schemaName, tableName));
     }
 
