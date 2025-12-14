@@ -47,7 +47,7 @@ public class MessageQueuePopConcurrencyBenchmark {
     @Param({"10", "100"})
     private int batchSize;
 
-    @Param({"2", "4", "8", "16"})
+    @Param({"4", "12"})
     private int threads;
 
     private HikariDataSource pool;
