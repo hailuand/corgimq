@@ -46,7 +46,7 @@ public class MessageQueuePopThroughputBenchmark {
     @Param({"H2", "COCKROACHDB", "MYSQL", "MSSQL", "ORACLE_FREE", "POSTGRES"})
     private DataSource dataSource;
 
-    @Param({"100000", "1000000"})
+    @Param({"1", "10"})
     private int batchSize;
 
     private HikariDataSource pool;
