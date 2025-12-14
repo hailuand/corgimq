@@ -26,8 +26,9 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 ---
 
 ### Index
-* [Compatability](#compatability)
-* [Get started](#get-started)
+* [Compatibility](#compatibility)
+* [Benchmarks](#-benchmarks)
+* [Get started](#-get-started)
   * [Creating a queue](#creating-a-queue)
   * [Pushing messages](#pushing-messages)
   * [Reading messages](#reading-messages)
@@ -37,7 +38,7 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 
 ---
 
-### Compatability
+### Compatibility
 
 #### Java
 | CorgiMQ Version | JDK |
@@ -45,8 +46,8 @@ and [Redis Simple Message Queue](https://github.com/smrchy/rsmq), but entirely o
 | `0.1+`        | 21  |
 
 
-#### RDMS
-RDBMS in this list have been tested for library compatability and are included in the test suites.
+#### RDBMS
+RDBMS in this list have been tested for library compatibility and are included in the test suites.
 
 | DBMS                 | Status             |
 |----------------------|--------------------|
@@ -59,7 +60,15 @@ RDBMS in this list have been tested for library compatability and are included i
 
 ---
 
-### Get started
+### 🧪 Benchmarks
+Benchmarks are available here: [GitHub Pages - JMH Benchmark](https://hailuand.github.io/corgimq/dev/bench/)
+
+Benchmarking is performed using [Java Microbenchmark Harness](https://github.com/openjdk/jmh), measuring throughput of public API methods.
+
+While a benchmark suite is provided, it does not guarantee similar results when used in all environments. Users are encouraged to run their own benchmarks and test
+for their own use cases.
+
+### 🚀 Get started
 #### Creating a queue
 A message queue is managed by an instance of `MessageQueue`.
 
@@ -146,7 +155,8 @@ _Default:_ `10`
 #### Locking
 A `Message` currently being read by a `MessageHandler` has its row locked until the function completes. If multiple
 `MessageHandler`s are operating on the same queue, locked rows are skipped to prevent the same message being received
-by different handlers. This is achieved using the RDBMS's `SELECT FOR UPDATE` command.
+by different handlers. This is achieved using the RDBMS's `SELECT FOR UPDATE` command. Thus, it's important to consider the
+isolation level configured by the `Connection` provided - `READ COMMITTED` or stronger.
 
 #### Transactional message handling
 The transaction's `Connection` can be accessed through the `MessageHandlerBatch` argument passed to the
