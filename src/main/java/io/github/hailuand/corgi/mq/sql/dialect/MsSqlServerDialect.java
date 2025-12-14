@@ -109,7 +109,7 @@ public class MsSqlServerDialect implements SqlDialect {
     @Override
     public String readMessagesDql(String schemaName, String tableName, int numMessages) {
         return """
-                SELECT TOP %d * FROM [%s].[%s] WITH (UPDLOCK, READPAST)
+                SELECT TOP %d * FROM [%s].[%s] WITH (UPDLOCK, READPAST, ROWLOCK)
                 WHERE [processing_time] IS NULL
                 ORDER BY [message_time] ASC
                 """.formatted(numMessages, schemaName, tableName);
