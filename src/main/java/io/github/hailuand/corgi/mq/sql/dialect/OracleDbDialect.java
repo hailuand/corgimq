@@ -54,7 +54,7 @@ public class OracleDbDialect implements SqlDialect {
                     WHERE index_name = UPPER('%s');
 
                     IF v_count = 0 THEN
-                        EXECUTE IMMEDIATE 'CREATE INDEX %s ON %s ("processing_time")';
+                        EXECUTE IMMEDIATE 'CREATE INDEX %s ON %s ("processing_time", "message_time")';
                     END IF;
                 END;
                 """.formatted(getProcessingTimeIndexName(tableName), getProcessingTimeIndexName(tableName), tableName);

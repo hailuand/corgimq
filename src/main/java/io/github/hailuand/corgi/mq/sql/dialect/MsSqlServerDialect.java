@@ -56,7 +56,7 @@ public class MsSqlServerDialect implements SqlDialect {
                     WHERE name = '%s' AND object_id = OBJECT_ID('[%s].[%s]'))
                 BEGIN
                     CREATE INDEX [%s]
-                    ON [%s].[%s] ([processing_time])
+                    ON [%s].[%s] ([processing_time], [message_time])
                 END
                 """.formatted(
                         getProcessingTimeIndexName(tableName),
@@ -109,7 +109,7 @@ public class MsSqlServerDialect implements SqlDialect {
     @Override
     public String readMessagesDql(String schemaName, String tableName, int numMessages) {
         return """
-                SELECT TOP %d * FROM [%s].[%s] WITH (UPDLOCK, READPAST)
+                SELECT TOP %d * FROM [%s].[%s] WITH (UPDLOCK, READPAST, ROWLOCK)
                 WHERE [processing_time] IS NULL
                 ORDER BY [message_time] ASC
                 """.formatted(numMessages, schemaName, tableName);

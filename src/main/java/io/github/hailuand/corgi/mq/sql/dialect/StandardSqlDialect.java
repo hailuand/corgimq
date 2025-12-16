@@ -45,7 +45,7 @@ public class StandardSqlDialect implements SqlDialect {
     public String indexDdl(String schemaName, String tableName) {
         return """
                 CREATE INDEX IF NOT EXISTS "%s"
-                ON "%s"."%s" ("processing_time")
+                ON "%s"."%s" ("processing_time", "message_time")
                 """.formatted(getProcessingTimeIndexName(tableName), schemaName, tableName);
     }
 
