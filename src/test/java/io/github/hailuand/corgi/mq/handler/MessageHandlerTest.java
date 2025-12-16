@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -283,6 +284,76 @@ public class MessageHandlerTest extends AbstractMessageQueueTest {
                 .toList();
         assertMessagesInTable(dataSource, unprocessedMessages, false);
         tearDown(dataSource, this.messageQueue);
+    }
+
+    @ParameterizedTest
+    @EnumSource(DataSource.class)
+    public void testMultiThreading2(DataSource dataSource) throws SQLException, InterruptedException {
+        configure(dataSource);
+        var messages = createMessages(40);
+        var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(3));
+        push(dataSource, messages);
+        var threadMessageSets = new ArrayList<Set<Message>>();
+        var threads = new ArrayList<Thread>();
+        for (int i = 0; i < 4; i++) {
+            var threadMessages = Collections.synchronizedSet(new HashSet<Message>());
+            threadMessageSets.add(threadMessages);
+            threads.add(new Thread(() -> {
+                while (true) {
+                    var sizeBefore = threadMessages.size();
+                    listen(dataSource, handler, batch -> {
+                        threadMessages.addAll(batch.messages());
+                        return batch.messages();
+                    });
+                    if (threadMessages.size() == sizeBefore) {
+                        break;
+                    }
+                }
+            }));
+        }
+
+        threads.forEach(Thread::start);
+        for (var thread : threads) {
+            thread.join();
+        }
+
+        for (int i = 0; i < threadMessageSets.size(); i++) {
+            for (int j = i + 1; j < threadMessageSets.size(); j++) {
+                var threadI = threadMessageSets.get(i);
+                var threadJ = threadMessageSets.get(j);
+                for (var msg : threadI) {
+                    assertFalse(threadJ.contains(msg), "Threads processed the same message: " + msg.id());
+                }
+            }
+        }
+        var allProcessedMessages = new HashSet<Message>();
+        for (var threadMessages : threadMessageSets) {
+            allProcessedMessages.addAll(threadMessages);
+        }
+        assertMessagesInTable(dataSource, new ArrayList<>(allProcessedMessages), true);
+        var unprocessedMessages =
+                messages.stream().filter(m -> !allProcessedMessages.contains(m)).toList();
+        if (!unprocessedMessages.isEmpty()) {
+            assertMessagesInTable(dataSource, unprocessedMessages, false);
+        }
+    }
+
+    @Test
+    public void testOracleJdbcConfigurationApplied() throws SQLException {
+        var dataSource = DataSource.ORACLE_FREE;
+        configure(dataSource);
+        var messages = createMessages(20);
+        push(dataSource, messages);
+        int batchSize = 5;
+        var handler = MessageHandler.of(this.messageQueue, MessageHandlerConfig.of(batchSize));
+        var processedMessages = new ArrayList<Message>();
+        listen(dataSource, handler, batch -> {
+            assertEquals(batchSize, batch.messages().size(), "Oracle should return exact fetchSize + maxRows size");
+            processedMessages.addAll(batch.messages());
+            return batch.messages();
+        });
+        assertEquals(batchSize, processedMessages.size());
+        assertMessagesInTable(dataSource, processedMessages, true);
     }
 
     private void assertMessagesInTable(DataSource dataSource, List<Message> messages, boolean processed)
