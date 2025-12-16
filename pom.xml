@@ -46,7 +46,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- immutables -->
-        <immutables.version>2.11.7</immutables.version>
+        <immutables.version>2.12.0</immutables.version>
         <!-- postgresql -->
         <postgresql.version>42.7.8</postgresql.version>
         <!-- mysql -->
@@ -74,7 +74,7 @@
         <maven.javadoc.plugin.version>3.12.0</maven.javadoc.plugin.version>
         <maven.source.plugin.version>3.4.0</maven.source.plugin.version>
         <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
-        <maven.release.plugin.version>3.3.0</maven.release.plugin.version>
+        <maven.release.plugin.version>3.3.1</maven.release.plugin.version>
         <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
         <maven.exec.plugin.version>3.6.2</maven.exec.plugin.version>
         <!-- test containers -->
