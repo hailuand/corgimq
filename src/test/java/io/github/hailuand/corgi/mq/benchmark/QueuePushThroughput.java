@@ -17,13 +17,12 @@
  *  under the License.
  */
 
-package io.github.hailuand.corgi.mq.benchmark.throughput;
+package io.github.hailuand.corgi.mq.benchmark;
 
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.hailuand.DataSource;
 import io.github.hailuand.DatabaseContainers;
 import io.github.hailuand.corgi.mq.MessageQueue;
-import io.github.hailuand.corgi.mq.benchmark.BenchmarkUtility;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
 import io.github.hailuand.corgi.mq.sql.dialect.SqlDialectFactory;
@@ -36,13 +35,13 @@ import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-@BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.SECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3, time = 5)
-@Measurement(iterations = 5, time = 10)
+@Measurement(iterations = 5, time = 3)
 @Fork(1)
 @State(Scope.Benchmark)
-public class MessageQueuePushThroughputBenchmark {
+public class QueuePushThroughput {
     @Param({"H2", "COCKROACHDB", "MYSQL", "MSSQL", "ORACLE_FREE", "POSTGRES"})
     private DataSource dataSource;
 
@@ -95,7 +94,7 @@ public class MessageQueuePushThroughputBenchmark {
     }
 
     @Benchmark
-    public void benchmarkPush() throws SQLException {
+    public void push() throws SQLException {
         queue.push(messages, conn);
     }
 }

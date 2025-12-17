@@ -17,18 +17,15 @@
  *  under the License.
  */
 
-package io.github.hailuand.corgi.mq.benchmark.throughput;
+package io.github.hailuand.corgi.mq.benchmark;
 
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.hailuand.DataSource;
 import io.github.hailuand.DatabaseContainers;
 import io.github.hailuand.corgi.mq.MessageQueue;
-import io.github.hailuand.corgi.mq.benchmark.BenchmarkUtility;
 import io.github.hailuand.corgi.mq.model.config.MessageQueueConfig;
 import io.github.hailuand.corgi.mq.model.message.Message;
-import io.github.hailuand.corgi.mq.sql.dialect.SqlDialectFactory;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
@@ -36,23 +33,24 @@ import java.util.concurrent.TimeUnit;
 import org.openjdk.jmh.annotations.*;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 
-@BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.SECONDS)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3, time = 5)
-@Measurement(iterations = 5, time = 10)
+@Measurement(iterations = 5, time = 3)
 @Fork(1)
 @State(Scope.Benchmark)
-public class MessageQueuePopThroughputBenchmark {
+public class QueuePushConcurrency {
     @Param({"H2", "COCKROACHDB", "MYSQL", "MSSQL", "ORACLE_FREE", "POSTGRES"})
     private DataSource dataSource;
 
-    @Param({"1", "10"})
+    @Param({"10", "100"})
     private int batchSize;
 
+    @Param({"4", "12"})
+    private int threads;
+
     private HikariDataSource pool;
-    private Connection conn;
     private MessageQueue queue;
-    private List<Message> messages;
 
     @Setup(Level.Trial)
     public void setupTrial() throws SQLException {
@@ -62,45 +60,36 @@ public class MessageQueuePopThroughputBenchmark {
             container.start();
         }
         var config = DatabaseContainers.createHikariConfig(dataSource, container);
-        config.setLeakDetectionThreshold(TimeUnit.MINUTES.toMillis(5));
+        config.setLeakDetectionThreshold(TimeUnit.SECONDS.toMillis(10));
         pool = new HikariDataSource(config);
-        conn = pool.getConnection();
-
-        queue = MessageQueue.of(MessageQueueConfig.of(BenchmarkUtility.createQueueName("pop")), conn);
-        queue.createTableWithSchemaIfNotExists(conn);
-    }
-
-    @Setup(Level.Iteration)
-    public void setupIteration() {
-        messages = BenchmarkUtility.createMessages(batchSize);
-    }
-
-    @Setup(Level.Invocation)
-    public void setupInvocation() throws SQLException {
-        queue.push(messages, conn);
-    }
-
-    @TearDown(Level.Invocation)
-    public void tearDownInvocation() throws SQLException {
-        var dialect = SqlDialectFactory.fromConnection(conn);
-        try (PreparedStatement stmt =
-                conn.prepareStatement(dialect.truncateTableDml(queue.tableSchemaName(), queue.queueTableName()))) {
-            stmt.execute();
-        }
-    }
-
-    @TearDown(Level.Trial)
-    public void tearDownTrial() throws SQLException {
-        if (conn != null && !conn.isClosed()) {
-            conn.close();
-        }
-        if (pool != null && !pool.isClosed()) {
-            pool.close();
+        try (var conn = pool.getConnection()) {
+            queue = MessageQueue.of(MessageQueueConfig.of(BenchmarkUtility.createQueueName("push")), conn);
+            queue.createTableWithSchemaIfNotExists(conn);
         }
     }
 
     @Benchmark
-    public void benchmarkPop() throws SQLException {
-        queue.pop(messages, conn);
+    @Threads(Threads.MAX)
+    public void push(ThreadState state) throws SQLException {
+        queue.push(state.messages, state.threadConn);
+    }
+
+    @State(Scope.Thread)
+    public static class ThreadState {
+        Connection threadConn;
+        List<Message> messages;
+
+        @Setup(Level.Invocation)
+        public void setupInvocation(QueuePushConcurrency parent) throws SQLException {
+            messages = BenchmarkUtility.createMessages(parent.batchSize);
+            threadConn = parent.pool.getConnection();
+        }
+
+        @TearDown(Level.Invocation)
+        public void tearDownInvocation() throws SQLException {
+            if (threadConn != null && !threadConn.isClosed()) {
+                threadConn.close();
+            }
+        }
     }
 }
