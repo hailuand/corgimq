@@ -78,7 +78,7 @@
         <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
         <maven.exec.plugin.version>3.6.2</maven.exec.plugin.version>
         <!-- test containers -->
-        <testcontainers.version>2.0.2</testcontainers.version>
+        <testcontainers.version>2.0.3</testcontainers.version>
         <!-- hikaricp -->
         <hikaricp.version>7.0.2</hikaricp.version>
         <!-- spotless -->
