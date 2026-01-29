@@ -52,7 +52,7 @@
         <!-- mysql -->
         <mysql.version>9.5.0</mysql.version>
         <!-- mssql -->
-        <mssql.version>13.3.0.jre11-preview</mssql.version>
+        <mssql.version>13.3.1.jre11-preview</mssql.version>
         <!-- oracledb -->
         <oracledb.version>23.26.0.0.0</oracledb.version>
         <!-- slf4j -->
