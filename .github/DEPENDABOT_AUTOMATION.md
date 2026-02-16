@@ -14,7 +14,7 @@ The automation workflow requires a Personal Access Token (PAT) with the followin
    - Go to GitHub Settings → Developer settings → Personal access tokens → Fine-grained tokens
    - Click "Generate new token"
    - Set the token name (e.g., "Dependabot Automation")
-   - Select the repository (hailuand/corgimq)
+   - Select this repository
    - Set the following permissions:
      - Repository permissions → Pull requests: Read and write
      - Repository permissions → Contents: Read and write
