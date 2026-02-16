@@ -64,7 +64,7 @@
         <!-- h2 -->
         <h2.version>2.4.240</h2.version>
         <!-- datafaker -->
-        <datafaker.version>2.5.3</datafaker.version>
+        <datafaker.version>2.5.4</datafaker.version>
         <!-- java microbenchmark harness -->
         <jmh.version>1.37</jmh.version>
         <!-- jacoco -->
