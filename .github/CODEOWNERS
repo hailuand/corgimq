@@ -2,11 +2,4 @@
 # the repo. Unless a later match takes precedence,
 # @hailuand will be requested for
 # review when someone opens a pull request.
-
-# Exclude dependency files from code owner requirements
-# to allow Dependabot automation to work without manual approval
-pom.xml
-.github/dependabot.yaml
-
-# All other files require review
 *       @hailuand

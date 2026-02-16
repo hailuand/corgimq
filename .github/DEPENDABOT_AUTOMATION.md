@@ -8,23 +8,37 @@ The automation workflow requires a Personal Access Token (PAT) with the followin
 - `pull_requests: write` - To approve pull requests
 - `contents: write` - To enable auto-merge
 
-### Important: CODEOWNERS Considerations
+### Important: CODEOWNERS and Self-Approval
 
-If you have CODEOWNERS configured and branch protection requires code owner reviews:
+**If you are set as the code owner for files Dependabot updates (like `pom.xml`), the current workflow WILL NOT bypass your review requirement.**
 
-**Option 1 (Recommended): Exclude dependency files from CODEOWNERS**
-- Add entries to `.github/CODEOWNERS` to exclude files like `pom.xml` from requiring code owner review
-- This allows the workflow to approve and merge Dependabot PRs automatically
+This is because:
+1. GitHub prevents self-approval when you're listed as a CODEOWNER
+2. Even if the workflow approves the PR using your PAT, it counts as you approving your own PR
+3. Branch protection rules requiring code owner reviews will still block the merge
 
-**Option 2: Use a PAT from a different user**
-- If the PAT belongs to the same user as the CODEOWNER, GitHub prevents self-approval
+### Solutions to Bypass CODEOWNERS Review
+
+Choose one of these options to allow automatic merging:
+
+**Option 1 (Recommended): Use a PAT from a different user**
 - Create the PAT using a bot account or another admin user with repository access
-- This allows the workflow to approve PRs that would otherwise require your review
+- This allows the workflow to provide a legitimate external approval
+- The approval will satisfy CODEOWNERS requirements since it's not self-approval
 
-**Option 3: Configure branch protection**
-- In repository Settings → Branches → Branch protection rules
-- Uncheck "Require review from Code Owners" OR
-- Check "Allow specified actors to bypass required pull requests" and add Dependabot
+**Option 2: Configure branch protection to allow Dependabot bypass**
+- Go to repository Settings → Branches → Branch protection rules for `main`
+- Under "Require a pull request before merging":
+  - Check "Allow specified actors to bypass required pull requests"
+  - Add `dependabot` to the bypass list
+- This allows Dependabot PRs to merge without requiring reviews
+
+**Option 3: Disable CODEOWNERS requirement for branch protection**
+- Go to repository Settings → Branches → Branch protection rules for `main`
+- Uncheck "Require review from Code Owners"
+- Note: This removes CODEOWNERS enforcement for all PRs, not just Dependabot
+
+**Current Setup**: If you use your own PAT, Dependabot PRs will be approved but will still wait for you to manually merge them after CI passes, since the approval counts as self-approval.
 
 ## Setup Instructions
 
