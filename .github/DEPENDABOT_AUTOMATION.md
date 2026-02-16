@@ -8,6 +8,24 @@ The automation workflow requires a Personal Access Token (PAT) with the followin
 - `pull_requests: write` - To approve pull requests
 - `contents: write` - To enable auto-merge
 
+### Important: CODEOWNERS Considerations
+
+If you have CODEOWNERS configured and branch protection requires code owner reviews:
+
+**Option 1 (Recommended): Exclude dependency files from CODEOWNERS**
+- Add entries to `.github/CODEOWNERS` to exclude files like `pom.xml` from requiring code owner review
+- This allows the workflow to approve and merge Dependabot PRs automatically
+
+**Option 2: Use a PAT from a different user**
+- If the PAT belongs to the same user as the CODEOWNER, GitHub prevents self-approval
+- Create the PAT using a bot account or another admin user with repository access
+- This allows the workflow to approve PRs that would otherwise require your review
+
+**Option 3: Configure branch protection**
+- In repository Settings → Branches → Branch protection rules
+- Uncheck "Require review from Code Owners" OR
+- Check "Allow specified actors to bypass required pull requests" and add Dependabot
+
 ## Setup Instructions
 
 1. **Create a Fine-grained Personal Access Token:**
