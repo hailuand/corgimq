@@ -50,7 +50,7 @@
         <!-- postgresql -->
         <postgresql.version>42.7.10</postgresql.version>
         <!-- mysql -->
-        <mysql.version>9.6.0</mysql.version>
+        <mysql.version>9.7.0</mysql.version>
         <!-- mssql -->
         <mssql.version>13.4.0.jre11</mssql.version>
         <!-- oracledb -->
