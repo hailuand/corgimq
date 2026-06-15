@@ -54,7 +54,7 @@
         <!-- mssql -->
         <mssql.version>13.4.0.jre11</mssql.version>
         <!-- oracledb -->
-        <oracledb.version>23.26.1.0.0</oracledb.version>
+        <oracledb.version>23.26.2.0.0</oracledb.version>
         <!-- slf4j -->
         <slf4j.api.version>2.0.18</slf4j.api.version>
         <!-- log4j2 -->
