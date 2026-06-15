@@ -80,7 +80,7 @@
         <!-- test containers -->
         <testcontainers.version>2.0.5</testcontainers.version>
         <!-- hikaricp -->
-        <hikaricp.version>7.0.2</hikaricp.version>
+        <hikaricp.version>7.1.0</hikaricp.version>
         <!-- spotless -->
         <spotless.version>3.6.0</spotless.version>
         <!-- sonatype -->
